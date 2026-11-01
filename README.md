@@ -69,7 +69,7 @@ Example:
 
 Use the provider prefix to select a preferred provider. If it fails with a retryable provider error, API-FLOW tries the other enabled credentials belonging to the same account. Other connected providers are then used as fallbacks with their configured default model. Never send provider secrets from a client-side/browser app.
 
-Current limitation: non-streaming chat completions only. Streaming, richer model catalogs, provider-specific request translation, per-key quotas, and detailed billing are not implemented yet.
+Streaming chat completions are supported with `"stream": true` using Server-Sent Events. The gateway forwards the provider stream without buffering it and adds `x-api-flow-provider`, `x-api-flow-attempts`, `x-api-flow-fallback`, and `x-api-flow-latency-ms` response headers. Usage events record request metadata and time-to-first-response; streamed token totals are not yet collected. Richer model catalogs, provider-specific request translation, per-key quotas, and detailed billing remain planned.
 
 ## Security model
 - Each virtual key is tied to one Supabase user and stored as a hash.
