@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 export default function AuthPage() {
-  const supabase = createClient();
   const router = useRouter();
   const [mode,setMode] = useState<"signup"|"signin">("signup");
   const [step,setStep] = useState<"email"|"otp"|"password">("email");
@@ -17,24 +16,28 @@ export default function AuthPage() {
   const [notice,setNotice] = useState("");
 
   async function sendCode() {
+    const supabase = createClient();
     setBusy(true); setError(""); setNotice("");
     const {error} = await supabase.auth.signInWithOtp({email:email.trim(),options:{shouldCreateUser:mode==="signup"}});
     if(error) setError(error.message); else {setStep("otp");setNotice("Check your inbox for the 6-digit verification code.");}
     setBusy(false);
   }
   async function verify() {
+    const supabase = createClient();
     setBusy(true);setError("");
     const {error}=await supabase.auth.verifyOtp({email:email.trim(),token:otp.trim(),type:"email"});
     if(error) setError(error.message); else if(mode==="signup") setStep("password"); else router.replace("/dashboard");
     setBusy(false);
   }
   async function setNewPassword() {
+    const supabase = createClient();
     setBusy(true);setError("");
     const {error}=await supabase.auth.updateUser({password});
     if(error) setError(error.message); else router.replace("/dashboard");
     setBusy(false);
   }
   async function signIn() {
+    const supabase = createClient();
     setBusy(true);setError("");
     const {error}=await supabase.auth.signInWithPassword({email:email.trim(),password});
     if(error) setError(error.message); else router.replace("/dashboard");
