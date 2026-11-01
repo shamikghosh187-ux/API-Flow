@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Activity, ArrowDownUp, BarChart3, Check, CircleDot, Code2, Gauge, Network, ShieldCheck, Sparkles, Zap } from "lucide-react";
 
 const providers = [
@@ -14,7 +15,7 @@ function BrandMark() {
 
 function Header() {
   return <header className="site-header">
-    <a href="/" className="brand"><BrandMark /><span>API-<b>FLOW</b></span></a>
+    <Link href="/" className="brand"><BrandMark /><span>API-<b>FLOW</b></span></Link>
     <nav className="main-nav" aria-label="Main navigation">
       {[["Home", "#"], ["Models", "#models"], ["Pricing", "#pricing"], ["Docs", "#docs"], ["Playground", "#playground"]].map(([label, href], i) => <a key={label} href={href} className={i === 0 ? "active" : ""}>{label}</a>)}
     </nav>
@@ -104,7 +105,7 @@ export default function Home() {
       <div className="network-intro">
         <span className="hero-badge"><i /> ONE API. EVERY MODEL.</span>
         <h1>One API. <span>Infinite</span> intelligence.</h1>
-        <p>Route, monitor, and scale across the world's leading AI models — from one developer-first API.</p>
+        <p>Route, monitor, and scale across the world&apos;s leading AI models — from one developer-first API.</p>
       </div>
       <div className="network-stage"><ModelRouting /><RequestFlow /><DashboardPreview /></div>
       <div className="network-caption">
