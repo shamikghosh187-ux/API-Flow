@@ -11,7 +11,6 @@ const bases:Record<string,{url:string;model:string}>={
  openai:{url:"https://api.openai.com/v1",model:"gpt-4o-mini"},
  deepseek:{url:"https://api.deepseek.com/v1",model:"deepseek-chat"},
  mistral:{url:"https://api.mistral.ai/v1",model:"mistral-small-latest"},
- anthropic:{url:"https://api.anthropic.com/v1",model:"claude-3-5-haiku-latest"},
  google:{url:"https://generativelanguage.googleapis.com/v1beta/openai",model:"gemini-2.5-flash"}
 };
 const retry=(s:number)=>[401,402,403,408,409,425,429].includes(s)||s>=500;
@@ -34,7 +33,8 @@ export async function POST(request:NextRequest){
  const slash=requested.indexOf("/");
  const requestedProvider=slash>0?requested.slice(0,slash).toLowerCase():"";
  const requestedModel=slash>0?requested.slice(slash+1):requested;
- if(requestedProvider&&!bases[requestedProvider])return err("Unknown provider prefix. Supported: groq, openrouter, openai, deepseek, mistral, anthropic, google.",400,"invalid_request_error");
+ const autoModel=["auto","api-flow/auto",""].includes(requested.toLowerCase());
+ if(requestedProvider&&!bases[requestedProvider])return err("Unknown provider prefix. Supported: groq, openrouter, openai, deepseek, mistral, google.",400,"invalid_request_error");
  const ordered=[...rows].sort((a,b)=>{
   if(requestedProvider){const ap=a.provider===requestedProvider?0:1,bp=b.provider===requestedProvider?0:1;return ap-bp||a.priority-b.priority}
   return a.priority-b.priority;
@@ -46,7 +46,7 @@ export async function POST(request:NextRequest){
   attempts++;usedProvider=row.provider;usedCredential=row.id;
   try{
    const secret=decryptSecret(row.encrypted_secret);
-   const model=(requestedProvider===row.provider?requestedModel:requestedProvider?"":requestedModel)||config.model;
+   const model=requestedProvider===row.provider?requestedModel:(requestedProvider||autoModel||attempts>1?config.model:requestedModel);
    const upstream=await fetch(config.url+"/chat/completions",{method:"POST",headers:{"Authorization":"Bearer "+secret,"Content-Type":"application/json"},body:JSON.stringify({...parsed.data,model,stream:parsed.data.stream===true}),cache:"no-store",signal:AbortSignal.timeout(Math.min(12000,deadline-Date.now()-250))});
    if(upstream.ok){if(parsed.data.stream){streamResponse=upstream;}else{result=await upstream.json();}break}
    lastMessage=row.provider+" returned HTTP "+upstream.status;
@@ -58,7 +58,7 @@ export async function POST(request:NextRequest){
   await Promise.all([
    admin.from("api_keys").update({last_used_at:new Date().toISOString()}).eq("id",key.id),
    admin.from("provider_credentials").update({last_used_at:new Date().toISOString(),last_error_at:null,last_error_code:null}).eq("id",usedCredential),
-   admin.from("usage_events").insert({user_id:key.user_id,api_key_id:key.id,provider:["groq","openrouter"].includes(usedProvider)?usedProvider:"other",model:parsed.data.model,status_code:200,latency_ms:latency})
+   admin.from("usage_events").insert({user_id:key.user_id,api_key_id:key.id,provider:usedProvider,model:parsed.data.model,status_code:200,latency_ms:latency})
   ]);
   return new Response(streamResponse.body,{status:streamResponse.status,headers:{
    "content-type":streamResponse.headers.get("content-type")||"text/event-stream; charset=utf-8",
