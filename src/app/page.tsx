@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Boxes, Code2, Gauge, KeyRound, LockKeyhole, Network, Radio, ShieldCheck, Waypoints } from "lucide-react";
+import { ArrowRight, Boxes, Code2, Gauge, KeyRound, LockKeyhole, Network, Radio, Waypoints } from "lucide-react";
 
 const capabilities = [
   {icon:LockKeyhole,title:"Encrypted provider vault",text:"Save your own provider credentials. API-FLOW encrypts secrets before storing them."},
