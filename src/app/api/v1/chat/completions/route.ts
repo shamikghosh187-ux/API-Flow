@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getFallbackProviders, resolveProvider } from "@/lib/providers";
+import { getFallbackProviders, resolveProvider, type ProviderConfig } from "@/lib/providers";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -20,6 +20,12 @@ function error(message: string, status: number, type = "api_error") {
   return NextResponse.json({ error: { message, type } }, { status });
 }
 
+function shouldRetry(status: number) {
+  return status === 408 || status === 409 || status === 425 || status === 429 || status >= 500;
+}
+
+type Attempt = { provider: ProviderConfig; model: string; key: string; keyIndex: number };
+
 export async function POST(request: NextRequest) {
   const gatewayKey = process.env.API_FLOW_MASTER_KEY;
   if (!gatewayKey) return error("Gateway authentication is not configured.", 503, "configuration_error");
@@ -33,28 +39,39 @@ export async function POST(request: NextRequest) {
   if (!parsed.success) return error("Invalid chat completion request.", 400, "invalid_request_error");
 
   if (parsed.data.stream) {
-    return error("Streaming is not available in this initial gateway release. Send stream:false or omit stream.", 400, "unsupported_feature");
+    return error("Streaming is not available yet. Send stream:false or omit stream.", 400, "unsupported_feature");
   }
 
   const selected = resolveProvider(parsed.data.model);
   if (!selected) return error("No configured provider matches this model. Check the model prefix and server-side provider keys.", 503, "provider_unavailable");
 
-  const attempts = [selected.provider, ...getFallbackProviders(selected.provider.id)];
-  let lastStatus = 502;
-  let lastMessage = "All configured providers failed.";
+  const providers = [selected.provider, ...getFallbackProviders(selected.provider.id)];
+  const attempts: Attempt[] = providers.flatMap((provider) =>
+    provider.apiKeys.map((key, index) => ({
+      provider,
+      model: provider.id === selected.provider.id ? selected.model : provider.defaultModel,
+      key,
+      keyIndex: index + 1,
+    })),
+  );
 
-  for (const provider of attempts) {
-    const model = provider.id === selected.provider.id ? selected.model : provider.defaultModel;
+  let lastStatus = 502;
+  let lastMessage = "All configured provider keys failed.";
+  let attemptsMade = 0;
+
+  for (const attempt of attempts) {
+    attemptsMade += 1;
+    const { provider, model, key, keyIndex } = attempt;
     try {
       const upstream = await fetch(`${provider.baseUrl}/chat/completions`, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${provider.apiKey}`,
+          "Authorization": `Bearer ${key}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ ...parsed.data, model, stream: false }),
         cache: "no-store",
-        signal: AbortSignal.timeout(55000),
+        signal: AbortSignal.timeout(20000),
       });
 
       if (upstream.ok) {
@@ -62,21 +79,27 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(payload, {
           headers: {
             "x-api-flow-provider": provider.id,
-            "x-api-flow-fallback": provider.id === selected.provider.id ? "false" : "true",
+            "x-api-flow-fallback": provider.id === selected.provider.id && keyIndex === 1 ? "false" : "true",
+            "x-api-flow-key-index": String(keyIndex),
+            "x-api-flow-attempts": String(attemptsMade),
           },
         });
       }
 
       lastStatus = upstream.status;
-      lastMessage = `${provider.id} returned HTTP ${upstream.status}.`;
-      if (upstream.status < 500 && upstream.status !== 429) {
+      lastMessage = `${provider.id} key ${keyIndex} returned HTTP ${upstream.status}.`;
+      if (!shouldRetry(upstream.status)) {
         return error(lastMessage, upstream.status, "provider_error");
       }
     } catch {
       lastStatus = 502;
-      lastMessage = `${provider.id} could not be reached.`;
+      lastMessage = `${provider.id} key ${keyIndex} could not be reached or timed out.`;
     }
   }
 
-  return error(lastMessage, lastStatus >= 500 ? 502 : lastStatus, "upstream_error");
+  return error(
+    `All ${attemptsMade} configured key attempt(s) failed. Last issue: ${lastMessage}`,
+    lastStatus >= 500 || shouldRetry(lastStatus) ? 502 : lastStatus,
+    "upstream_error",
+  );
 }
