@@ -128,3 +128,48 @@ a{color:inherit;text-decoration:none}
 @media(max-width:1150px){.network-stage{grid-template-columns:minmax(230px,.9fr) minmax(300px,1.1fr);gap:16px}.dashboard-panel{grid-column:1/-1;width:100%;max-width:720px;justify-self:center}.network-hero{padding-left:26px;padding-right:26px}.flow-panel{min-height:390px}}
 @media(max-width:700px){.site-header{height:82px;width:calc(100% - 32px)}.brand{font-size:20px;gap:8px}.brand-mark{transform:scale(.76);transform-origin:left center;width:43px}.login-link{height:41px;padding:0 13px;font-size:12px}.network-hero{padding:20px 16px 28px}.network-intro{margin-bottom:24px}.network-intro h1{font-size:38px}.network-intro p{font-size:13px;line-height:1.6;max-width:380px;margin:auto}.network-stage{display:flex;flex-direction:column;align-items:stretch;gap:14px}.visual-panel{width:100%}.flow-panel{min-height:300px;order:2}.dashboard-panel{order:3}.routing-panel{order:1}.flow-stage{grid-template-columns:55px minmax(16px,1fr) 128px minmax(16px,1fr) 55px;margin:25px 0}.router-core{min-height:148px}.flow-bottom{gap:8px;font-size:8px}.network-caption{font-size:8px;gap:12px;line-height:1.5}.metric-card>b{font-size:19px}}
 @media(prefers-reduced-motion:reduce){.provider-node,.flow-line i,.router-orbit{animation:none!important}}
+
+
+/* Authentication and developer console */
+.auth-shell{min-height:100svh;background:#050405;color:#f7f5f6;display:grid;place-items:center;padding:38px 20px;position:relative;overflow:hidden}
+.auth-glow{position:absolute;width:650px;height:650px;border-radius:50%;background:radial-gradient(circle,rgba(237,18,61,.15),transparent 68%);top:10%;left:50%;transform:translateX(-50%);pointer-events:none}
+.auth-brand,.console-brand{position:absolute;top:34px;left:5%;font-size:23px;font-weight:750;letter-spacing:-1px;z-index:1}.auth-brand b,.console-brand b{color:#ed123d}
+.auth-card{position:relative;width:min(100%,460px);padding:42px;border:1px solid rgba(255,255,255,.12);border-radius:20px;background:linear-gradient(145deg,rgba(20,15,17,.96),rgba(8,7,8,.98));box-shadow:0 30px 100px rgba(0,0,0,.55)}
+.auth-kicker,.console-eyebrow{font-size:11px;letter-spacing:.16em;color:#ed5270;font-weight:750}
+.auth-card h1{font-size:34px;letter-spacing:-1.5px;margin:18px 0 8px}.auth-subtitle{color:#a9a1a4;line-height:1.6;margin:0 0 30px}
+.auth-card label,.vault-form label{display:block;color:#d8d1d4;font-size:13px;font-weight:600;margin:18px 0 9px}
+.auth-input,.vault-form input,.vault-form select{width:100%;height:49px;padding:0 14px;border:1px solid rgba(255,255,255,.14);border-radius:9px;background:#0b090a;color:#fff;outline:none;margin-top:8px}
+.auth-input:focus,.vault-form input:focus,.vault-form select:focus{border-color:#ed123d;box-shadow:0 0 0 3px rgba(237,18,61,.12)}
+.auth-submit{width:100%;height:50px;margin-top:22px;border:0;border-radius:9px;background:#ed123d;color:white;font-weight:750;display:flex;align-items:center;justify-content:center;gap:9px;cursor:pointer}
+.auth-submit:hover{background:#ff3158}.auth-submit:disabled{opacity:.5;cursor:not-allowed}
+.auth-switch{display:block;margin:18px auto 0;color:#c9c0c3;font-size:13px;background:none;border:0;cursor:pointer}
+.auth-error,.auth-notice{padding:12px 14px;border-radius:9px;font-size:13px;margin-top:18px;background:rgba(237,18,61,.12);color:#ff9bad}.auth-notice{background:rgba(40,180,120,.1);color:#8ce0b9}
+.auth-security{border-top:1px solid rgba(255,255,255,.09);margin-top:28px;padding-top:18px;color:#81797c;font-size:11px;text-align:center}
+.console-shell{min-height:100svh;background:#070607;color:#f6f3f4;display:flex}
+.console-sidebar{width:250px;flex-shrink:0;border-right:1px solid rgba(255,255,255,.09);padding:105px 18px 25px;position:relative;background:#090809}
+.console-brand{left:24px;top:28px;position:absolute;font-size:20px;display:flex;align-items:center;gap:8px}.auth-brand-mark{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:8px;background:#ed123d;color:white;font-weight:900}
+.console-nav-label{font-size:10px;letter-spacing:.15em;color:#777075;font-weight:750;padding:20px 12px 10px}
+.console-nav{display:flex;align-items:center;gap:12px;padding:12px;border-radius:9px;color:#aaa2a6;font-size:13px;margin:4px 0}
+.console-nav.active,.console-nav:hover{background:rgba(237,18,61,.12);color:#fff}.console-nav.active{box-shadow:inset 2px 0 #ed123d}
+.console-sidebar-bottom{position:absolute;bottom:25px;left:26px;display:flex;gap:9px;align-items:center;color:#8c8588;font-size:12px}
+.console-main{width:min(1180px,100%);padding:38px 48px 70px;margin:0 auto}
+.console-topbar{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.08);padding-bottom:27px}
+.console-topbar h1{font-size:27px;letter-spacing:-.8px;margin:8px 0 0}
+.console-signout,.icon-button{border:1px solid rgba(255,255,255,.15);border-radius:8px;background:#100e0f;color:#ddd;padding:10px 15px;font-size:12px;cursor:pointer}
+.console-welcome{display:flex;justify-content:space-between;align-items:center;padding:35px 0 26px}.console-welcome h2{font-size:25px;letter-spacing:-.7px;margin:8px 0}.console-welcome p{color:#a59da0;font-size:14px;margin:0;max-width:650px;line-height:1.6}
+.plan-chip,.status-on,.status-off{font-size:10px;letter-spacing:.1em;border:1px solid rgba(237,18,61,.35);color:#ff718d;border-radius:30px;padding:8px 12px;white-space:nowrap}
+.console-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;margin:12px 0 26px}
+.console-metrics article{padding:20px;border:1px solid rgba(255,255,255,.1);border-radius:12px;background:linear-gradient(145deg,#151113,#0b090a)}
+.console-metrics article span{display:flex;align-items:center;gap:8px;color:#a59da0;font-size:10px;letter-spacing:.1em}
+.console-metrics article span svg{color:#ed3157}.console-metrics strong{display:block;font-size:32px;margin:16px 0 3px}.console-metrics small{color:#777075;font-size:11px}
+.console-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}.console-next,.vault-form,.vault-list,.endpoint-card,.secret-reveal{border:1px solid rgba(255,255,255,.1);border-radius:12px;background:#100d0e;padding:22px;margin:15px 0}
+.console-next h3,.vault-form h3,.vault-list h3{margin:0 0 9px;font-size:16px}.console-next p{font-size:13px;color:#a59da0;line-height:1.6}.console-next a{display:inline-flex;gap:8px;align-items:center;color:#ff5475;font-size:12px;font-weight:700;margin-top:7px}
+.console-note,.vault-form small,.vault-hint{color:#777075;font-size:11px;line-height:1.6;margin-top:20px}
+.vault-form{max-width:720px}.vault-form h3{display:flex;align-items:center;gap:9px}.vault-form label{margin-top:16px}.vault-form select{appearance:auto}.vault-form .auth-submit{max-width:270px}
+.vault-list{margin-top:25px}.vault-list h3{margin-bottom:18px}.vault-item{display:flex;align-items:center;gap:14px;padding:15px 0;border-top:1px solid rgba(255,255,255,.07)}
+.vault-item-info{flex:1;min-width:0}.vault-item-info b,.vault-item-info span{display:block}.vault-item-info b{font-size:13px}.vault-item-info span{font-size:11px;color:#8d8588;margin-top:5px}
+.status-on{color:#77d9a7;border-color:rgba(90,210,145,.3);letter-spacing:0}.status-off{color:#ff879b;border-color:rgba(237,18,61,.25);letter-spacing:0}
+.icon-button{padding:8px 10px;font-size:11px}.icon-button.danger{color:#ff718d}.vault-empty{padding:28px;text-align:center;color:#80797c;font-size:13px}
+.secret-reveal{border-color:rgba(237,18,61,.45);max-width:720px}.secret-reveal p{color:#aaa2a6;font-size:12px}.secret-reveal code,.endpoint-card code{display:block;overflow-wrap:anywhere;padding:12px;margin:10px 0;background:#050405;border-radius:7px;color:#ff9aae;font-size:12px}
+.secret-reveal .auth-submit{max-width:230px}.endpoint-card{max-width:720px}.endpoint-card b{font-size:14px}
+@media(max-width:800px){.console-shell{display:block}.console-sidebar{width:100%;height:auto;padding:75px 12px 12px;border-right:0;border-bottom:1px solid rgba(255,255,255,.1)}.console-sidebar-bottom{display:none}.console-nav{display:inline-flex;padding:9px;font-size:11px}.console-nav-label{display:none}.console-main{padding:25px 18px 50px}.console-metrics{grid-template-columns:1fr}.console-grid{grid-template-columns:1fr}.console-welcome{align-items:flex-start;gap:15px}.auth-card{padding:28px 22px}.auth-brand{top:22px;left:22px}}
