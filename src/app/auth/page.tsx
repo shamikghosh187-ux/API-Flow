@@ -1,3 +1,4 @@
+import Link from "next/link";
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -40,7 +41,7 @@ export default function AuthPage() {
     setBusy(false);
   }
 
-  return <main className="auth-shell"><a href="/" className="auth-brand">API-<b>FLOW</b></a>
+  return <main className="auth-shell"><Link href="/" className="auth-brand">API-<b>FLOW</b></Link>
     <section className="auth-card"><span className="auth-kicker">DEVELOPER ACCESS</span>
       <h1>{mode==="signin"?"Welcome back":step==="email"?"Create your account":step==="otp"?"Verify your email":"Create a password"}</h1>
       <p className="auth-subtitle">{step==="email"?"Your AI providers. One secure gateway.":step==="otp"?"Enter the one-time code sent to your email.":"Supabase Auth securely manages your password."}</p>
