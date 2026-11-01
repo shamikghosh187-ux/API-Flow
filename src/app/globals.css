@@ -1,27 +1,60 @@
 @import "tailwindcss";
 
-:root { color-scheme: dark; --bg:#050506; --text:#f4f2f2; --red:#d51d43; --red-bright:#ff3159; }
-* { box-sizing:border-box; }
-html { scroll-behavior:smooth; background:var(--bg); }
-body { margin:0; background:var(--bg); color:var(--text); font-family:Arial,Helvetica,sans-serif; -webkit-font-smoothing:antialiased; }
-a { color:inherit; text-decoration:none; }
-button { font:inherit; }
-::selection { background:rgba(213,29,67,.4); color:white; }
-
-.bio-scene { position:absolute; inset:0 0 auto; height:940px; overflow:hidden; pointer-events:none; z-index:0; background:radial-gradient(ellipse at 50% 36%,rgba(35,5,13,.42),transparent 56%),#050506; }
-.bio-art { position:absolute; inset:0; width:100%; height:100%; opacity:.92; }
-.bio-glow { position:absolute; width:540px; height:540px; border-radius:50%; filter:blur(100px); opacity:.16; }
-.bio-glow-left { left:-280px; top:180px; background:#ef1748; animation:glowBreath 9s ease-in-out infinite alternate; }
-.bio-glow-right { right:-240px; top:180px; background:#a30e36; animation:glowBreath 11s ease-in-out infinite alternate-reverse; }
-.dna-drift { transform-origin:150px 450px; animation:dnaFloat 16s ease-in-out infinite alternate; }
-.brain-drift { transform-origin:1300px 390px; animation:brainFloat 12s ease-in-out infinite alternate; }
-.orbit-lines { transform-origin:800px 450px; animation:orbit 38s linear infinite; }
-.bio-particle { opacity:.25; animation:particlePulse 5s ease-in-out infinite alternate; }
-.bio-vignette { position:absolute; inset:0; background:linear-gradient(90deg,rgba(5,5,6,.05),rgba(5,5,6,.18) 24%,rgba(5,5,6,.48) 50%,rgba(5,5,6,.16) 78%,rgba(5,5,6,.05)),linear-gradient(180deg,transparent 55%,#050506 99%); }
-@keyframes dnaFloat { from { transform:translate3d(-8px,-10px,0) rotate(-1deg); } to { transform:translate3d(18px,12px,0) rotate(2deg); } }
-@keyframes brainFloat { from { transform:translate3d(0,8px,0) scale(.985); } to { transform:translate3d(-12px,-14px,0) scale(1.035); } }
-@keyframes orbit { to { transform:rotate(360deg); } }
-@keyframes particlePulse { from { opacity:.12; transform:scale(.7); } to { opacity:.8; transform:scale(1.35); } }
-@keyframes glowBreath { from { opacity:.09; transform:scale(.85); } to { opacity:.23; transform:scale(1.15); } }
-@media (max-width:700px) { .bio-scene { height:820px; } .bio-art { width:150%; max-width:none; left:-25%; opacity:.62; } .bio-vignette { background:linear-gradient(180deg,rgba(5,5,6,.16),rgba(5,5,6,.56) 60%,#050506 99%); } }
-@media (prefers-reduced-motion:reduce) { *,*::before,*::after { scroll-behavior:auto!important; animation-duration:.01ms!important; animation-iteration-count:1!important; transition-duration:.01ms!important; } }
+:root{color-scheme:dark;--red:#ed123d;--red2:#ff3158;--white:#f7f5f6}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;background:#030303}
+body{margin:0;background:#030303;color:var(--white);font-family:Inter,Arial,Helvetica,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+.api-home{position:relative;min-height:100svh;height:941px;max-height:1100px;overflow:hidden;background:#030303;isolation:isolate}
+.science-backdrop{position:absolute;inset:0;z-index:-1;overflow:hidden;background:radial-gradient(ellipse at 50% 46%,#100306 0%,#050203 46%,#020202 78%)}
+.science-svg{position:absolute;inset:0;width:100%;height:100%;opacity:.96}
+.science-red-haze{position:absolute;inset:0;background:radial-gradient(ellipse at 5% 44%,rgba(211,0,43,.16),transparent 30%),radial-gradient(ellipse at 96% 45%,rgba(196,0,39,.17),transparent 30%),radial-gradient(ellipse at 50% 100%,rgba(174,0,34,.13),transparent 38%);filter:blur(22px)}
+.science-shade{position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.02),rgba(0,0,0,.08) 23%,rgba(0,0,0,.30) 43%,rgba(0,0,0,.30) 58%,rgba(0,0,0,.08) 79%,rgba(0,0,0,.02)),linear-gradient(180deg,rgba(0,0,0,.16),transparent 18%,transparent 75%,rgba(0,0,0,.26))}
+.helix-motion{transform-origin:220px 460px;animation:helixSway 19s ease-in-out infinite alternate}
+.brain-motion{transform-origin:1310px 420px;animation:brainFloat 13s ease-in-out infinite alternate}
+.orbit-motion{transform-origin:836px 470px;animation:orbitDrift 50s linear infinite}
+.science-particle{opacity:.3;filter:drop-shadow(0 0 4px #f21c48);animation:particleFlicker 4.5s ease-in-out infinite alternate}
+.site-header{height:120px;width:min(1510px,calc(100% - 100px));margin:0 auto;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;position:relative;z-index:2}
+.brand{display:flex;align-items:center;gap:15px;width:max-content;font-size:25px;font-weight:650;letter-spacing:-1.1px}
+.brand b{color:#f01440;font-weight:650}
+.brand-mark{position:relative;display:block;width:55px;height:50px}
+.brand-mark:before{content:"";position:absolute;left:4px;top:0;width:0;height:0;border-left:25px solid transparent;border-right:25px solid transparent;border-bottom:49px solid #f01440;filter:drop-shadow(0 0 12px rgba(238,18,61,.2))}
+.brand-mark:after{content:"";position:absolute;left:17px;top:13px;width:0;height:0;border-left:12px solid transparent;border-right:12px solid transparent;border-bottom:25px solid #080808}
+.brand-mark span{position:absolute;z-index:1;left:4px;bottom:0;width:52px;height:8px;background:linear-gradient(90deg,#e50937,#fff 54%,#6b071d);transform:skewX(-28deg)}
+.brand-mark i{position:absolute;z-index:2;right:1px;bottom:4px;width:17px;height:6px;background:#777;transform:skewX(30deg)}
+.main-nav{height:60px;display:flex;align-items:center;gap:7px;padding:5px;border:1px solid rgba(255,255,255,.12);border-radius:40px;background:rgba(5,5,5,.62);box-shadow:0 12px 45px rgba(0,0,0,.25);backdrop-filter:blur(18px)}
+.main-nav a{height:48px;min-width:116px;padding:0 22px;display:flex;align-items:center;justify-content:center;border-radius:30px;color:#d2cdd0;font-size:15px;transition:.25s}
+.main-nav a.active{color:#fff;border:1px solid #f01440;background:linear-gradient(130deg,rgba(238,15,61,.24),rgba(90,0,20,.12));box-shadow:0 0 24px rgba(238,15,61,.13)}
+.main-nav a:hover{color:white;background:rgba(255,255,255,.07)}
+.login-link{justify-self:end;display:flex;align-items:center;gap:11px;height:52px;padding:0 25px;border:1px solid #ed123d;border-radius:30px;background:rgba(0,0,0,.42);font-size:15px;font-weight:550;transition:.2s}
+.login-link svg{color:#ff1645}.login-link:hover{background:rgba(237,18,61,.16);box-shadow:0 0 28px rgba(237,18,61,.18)}
+.hero{position:relative;z-index:1;display:flex;align-items:center;flex-direction:column;text-align:center;padding:78px 24px 0}
+.hero-badge{display:flex;align-items:center;gap:14px;padding:12px 19px;border:1px solid rgba(237,18,61,.34);border-radius:30px;background:rgba(5,3,4,.7);box-shadow:0 8px 35px rgba(0,0,0,.2);font-size:15px;color:#f0e9eb;backdrop-filter:blur(12px)}
+.hero-badge span{width:12px;height:12px;border-radius:50%;background:#f01440;box-shadow:0 0 16px #f01440;animation:badgePulse 2s ease-in-out infinite}
+.hero h1{margin:20px 0 0;font-size:clamp(66px,6.1vw,102px);font-weight:650;line-height:.99;letter-spacing:-.067em;color:#f7f6f6;text-shadow:0 2px 32px rgba(0,0,0,.55)}
+.hero h1>span:first-child{color:#f01440}
+.hero h1 .period{color:#f01440}
+.hero-copy{margin:32px 0 0;color:#d0c9cc;font-size:21px;line-height:1.55;letter-spacing:-.025em;text-shadow:0 2px 14px #000}
+.hero-copy strong{color:#fff;font-weight:700}
+.hero-actions{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:38px}
+.primary-action,.secondary-action{height:61px;padding:0 32px;display:flex;align-items:center;justify-content:center;gap:17px;border-radius:36px;font-size:17px;font-weight:650;transition:transform .2s,background .2s,box-shadow .2s}
+.primary-action{min-width:252px;background:#ed123d;box-shadow:0 10px 36px rgba(237,18,61,.23)}
+.primary-action:hover{transform:translateY(-3px);background:#ff1747;box-shadow:0 13px 40px rgba(237,18,61,.34)}
+.secondary-action{min-width:194px;border:1px solid rgba(255,255,255,.28);background:rgba(0,0,0,.42);font-weight:550}
+.secondary-action:hover{border-color:#ed123d;background:rgba(237,18,61,.1)}
+.hero-benefits{display:flex;align-items:center;justify-content:center;margin-top:59px}
+.benefit{min-width:184px;display:flex;align-items:center;justify-content:center;gap:17px;padding:0 29px;border-right:1px solid rgba(255,255,255,.22);text-align:left}
+.benefit:last-child{border:0}
+.benefit svg{width:31px;height:31px;color:#f01440;stroke-width:1.8;flex-shrink:0}
+.benefit span{font-size:15px;line-height:1.4;color:#d5cfd1}
+.scroll-cue{position:absolute;z-index:2;bottom:42px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:16px;color:#aaa2a5;font-size:14px}
+.scroll-cue span{width:42px;height:48px;border:1px solid rgba(255,255,255,.28);border-radius:25px;display:grid;place-items:center;color:#fff;font-size:22px;animation:scrollBob 2s ease-in-out infinite}
+@keyframes helixSway{from{transform:translate3d(-8px,-5px,0) rotate(-.6deg)}to{transform:translate3d(10px,8px,0) rotate(.8deg)}}
+@keyframes brainFloat{from{transform:translate3d(0,5px,0) scale(.99)}to{transform:translate3d(-8px,-10px,0) scale(1.018)}}
+@keyframes orbitDrift{to{transform:rotate(360deg)}}
+@keyframes particleFlicker{from{opacity:.12;transform:scale(.7)}to{opacity:.75;transform:scale(1.4)}}
+@keyframes badgePulse{50%{opacity:.5;box-shadow:0 0 4px #f01440}}
+@keyframes scrollBob{50%{transform:translateY(6px)}}
+@media(max-width:1100px){.site-header{width:calc(100% - 48px);grid-template-columns:1fr auto}.main-nav{display:none}.hero{padding-top:95px}.hero h1{font-size:clamp(58px,8vw,88px)}.science-svg{width:125%;left:-12.5%}.benefit{min-width:155px;padding:0 18px}}
+@media(max-width:650px){.api-home{height:auto;min-height:900px}.site-header{height:88px;width:calc(100% - 34px)}.brand{font-size:20px;gap:9px}.brand-mark{transform:scale(.78);transform-origin:left center;width:44px}.login-link{height:43px;padding:0 15px;font-size:13px}.hero{padding:105px 18px 130px}.hero-badge{font-size:11px;padding:10px 14px}.hero h1{font-size:clamp(48px,12vw,70px);line-height:1.03;margin-top:26px}.hero-copy{font-size:15px;line-height:1.6;margin-top:23px}.desktop-break{display:none}.hero-actions{flex-direction:column;width:100%;margin-top:30px}.primary-action,.secondary-action{width:min(100%,290px);height:55px;font-size:15px}.hero-benefits{display:grid;grid-template-columns:1fr 1fr;gap:24px 4px;margin-top:48px}.benefit{min-width:0;padding:0 8px;border:0;justify-content:flex-start;gap:10px}.benefit svg{width:25px;height:25px}.benefit span{font-size:12px}.scroll-cue{bottom:25px;font-size:12px}.science-svg{width:180%;left:-40%;opacity:.7}.science-shade{background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(0,0,0,.48) 48%,rgba(0,0,0,.35))}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
