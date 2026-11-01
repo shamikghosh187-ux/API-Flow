@@ -1,20 +1,203 @@
 "use client";
+
 import Link from "next/link";
-import {useEffect,useState} from "react";
-type Item={id:string;provider:string;label:string;enabled:boolean;last_four:string|null};
-type ApiKey={id:string;name:string;key_prefix:string;revoked_at:string|null};
-const options=["groq","openrouter","openai","deepseek","mistral","google"];
-export default function ProvidersPage(){
- const [items,setItems]=useState<Item[]>([]),[provider,setProvider]=useState("groq"),[label,setLabel]=useState(""),[apiKey,setApiKey]=useState(""),[busy,setBusy]=useState(false),[error,setError]=useState(""),[notice,setNotice]=useState(""),[virtualSecret,setVirtualSecret]=useState("");
- async function load(){const r=await fetch("/api/provider-credentials");const j=await r.json();if(r.ok)setItems(j.credentials||[]);else setError(j.error||"Load failed");}
- useEffect(()=>{void load()},[]);
- async function add(e:React.FormEvent){e.preventDefault();setBusy(true);setError("");setNotice("");setVirtualSecret("");const r=await fetch("/api/provider-credentials",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({provider,label,apiKey})});const j=await r.json();if(!r.ok){setError(j.error||"Save failed");setBusy(false);return}setApiKey("");setLabel("");await load();
-  try{const kr=await fetch("/api/virtual-keys");const kj=await kr.json();const active=(kj.keys||[]).filter((k:ApiKey)=>!k.revoked_at);if(active.length===0){const cr=await fetch("/api/virtual-keys",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:"API-FLOW Master Key"})});const cj=await cr.json();if(cr.ok){setVirtualSecret(cj.secret);setNotice("Provider key saved. Your first API-FLOW virtual key was created automatically.");}else setNotice("Provider key saved. Create your API-FLOW virtual key in the Virtual API keys section.");}else{setNotice("Provider key saved and added to your existing API-FLOW routing pool. Your existing virtual key automatically uses it.");}}
-  catch{setNotice("Provider key saved. Open Virtual API keys to create or manage your gateway key.");}
- setBusy(false);
- }
- async function remove(id:string){if(!window.confirm("Delete this provider key? Requests will no longer be routed through it."))return;const r=await fetch("/api/provider-credentials?id="+id,{method:"DELETE"});if(r.ok)load();else setError("Delete failed")}
- async function toggle(i:Item){const r=await fetch("/api/provider-credentials",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:i.id,enabled:!i.enabled})});if(r.ok)load();else setError("Update failed")}
- async function copy(){await navigator.clipboard.writeText(virtualSecret)}
- return <main className="console-shell"><aside className="console-sidebar"><Link href="/" className="console-brand">API-<b>FLOW</b></Link><div className="console-nav-label">WORKSPACE</div><a className="console-nav" href="/dashboard">Overview</a><a className="console-nav active" href="/dashboard/providers">Providers</a><a className="console-nav" href="/dashboard/keys">Virtual API keys</a><a className="console-nav" href="/dashboard/usage">Usage &amp; analytics</a><a className="console-nav" href="/dashboard/playground">Playground</a></aside><section className="console-main"><header className="console-topbar"><div><span className="console-eyebrow">WORKSPACE / PROVIDERS</span><h1>Provider key vault</h1></div><a className="console-signout" href="/dashboard">Overview</a></header><div className="console-welcome"><div><span className="console-eyebrow">ONE GATEWAY · MANY PROVIDER KEYS</span><h2>Add 2, 3, 4 or 5 keys. Use one API-FLOW key.</h2><p>Every enabled credential joins your private routing pool. Your single virtual key is what your apps use; provider secrets stay encrypted on the server.</p></div></div><div className="routing-explainer"><b>How API-FLOW routes requests</b><p>API-FLOW tries your preferred provider first when you specify a provider prefix. If it fails with a retryable error, it tries your other enabled credentials. With model set to <code>auto</code>, it selects each provider&apos;s configured default model.</p><div className="routing-pills"><span>{items.filter(i=>i.enabled).length} enabled credentials</span><span>One virtual gateway key</span><span>Automatic fallback</span></div></div><form className="vault-form" onSubmit={add}><h3>Add provider credential</h3><label>Provider<select value={provider} onChange={e=>setProvider(e.target.value)}>{options.map(p=><option key={p} value={p}>{p}</option>)}</select></label><label>Label<input value={label} onChange={e=>setLabel(e.target.value)} placeholder="Main key / Backup key"/></label><label>Provider API key<input type="password" autoComplete="off" value={apiKey} onChange={e=>setApiKey(e.target.value)} placeholder="Paste provider secret"/></label><button className="auth-submit" disabled={busy||apiKey.trim().length<12}>{busy?"Saving and configuring...":"Add key to API-FLOW"}</button><small>Encrypted with AES-256-GCM. Full provider secrets are never shown again. Add multiple keys from the same or different providers.</small></form>{error&&<p className="auth-error">{error}</p>}{notice&&<p className="auth-notice">{notice}</p>}{virtualSecret&&<section className="secret-reveal"><b>Your API-FLOW virtual key is ready</b><p>Copy it now. This is the one key your application uses, regardless of how many provider keys you add.</p><code>{virtualSecret}</code><button className="auth-submit" onClick={copy}>Copy API-FLOW key</button><Link href="/dashboard/playground" className="auth-switch">Test it in Playground</Link></section>}<section className="vault-list"><h3>Routing pool ({items.length} credentials)</h3>{items.length===0?<p className="vault-empty">No provider keys added yet.</p>:items.map(i=><article className="vault-item" key={i.id}><div className="vault-item-info"><b>{i.label}</b><span>{i.provider} · •••• {i.last_four||"••••"}</span></div><span className={i.enabled?"status-on":"status-off"}>{i.enabled?"In routing pool":"Paused"}</span><button className="icon-button" onClick={()=>toggle(i)}>{i.enabled?"Pause":"Enable"}</button><button className="icon-button danger" onClick={()=>remove(i.id)}>Delete</button></article>)}</section><p className="usage-disclaimer">API-FLOW currently supports automatic fallback for retryable upstream failures. It does not yet run periodic key-health checks or balance traffic across providers by cost or latency. Provider credentials are only tried when their provider adapter is supported.</p></section></main>;
+import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
+import {
+  Activity, ArrowRight, Check, ChevronDown, CircleHelp, Copy, Eye, EyeOff,
+  KeyRound, Layers3, LoaderCircle, LockKeyhole, Plus, Power, RefreshCw,
+  ShieldCheck, Trash2, Zap
+} from "lucide-react";
+
+type Credential = {
+  id: string;
+  provider: string;
+  label: string;
+  enabled: boolean;
+  last_four: string | null;
+};
+type VirtualKey = { id: string; name: string; key_prefix: string; revoked_at: string | null };
+
+const providers = [
+  { id: "groq", name: "Groq", detail: "Fast inference", mark: "G" },
+  { id: "openrouter", name: "OpenRouter", detail: "Multi-model access", mark: "O" },
+  { id: "openai", name: "OpenAI", detail: "GPT models", mark: "◎" },
+  { id: "google", name: "Google AI", detail: "Gemini models", mark: "G" },
+  { id: "deepseek", name: "DeepSeek", detail: "DeepSeek models", mark: "D" },
+  { id: "mistral", name: "Mistral", detail: "Mistral models", mark: "M" },
+];
+
+export default function ProvidersPage() {
+  const [credentials, setCredentials] = useState<Credential[]>([]);
+  const [provider, setProvider] = useState("groq");
+  const [label, setLabel] = useState("");
+  const [apiKey, setApiKey] = useState("");
+  const [showSecret, setShowSecret] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [virtualSecret, setVirtualSecret] = useState("");
+  const [copied, setCopied] = useState(false);
+
+  async function loadCredentials() {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/provider-credentials");
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Could not load provider keys.");
+      setCredentials(data.credentials || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not load provider keys.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { void loadCredentials(); }, []);
+
+  async function addCredential(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setBusy(true);
+    setError("");
+    setNotice("");
+    setVirtualSecret("");
+    try {
+      const response = await fetch("/api/provider-credentials", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provider, label: label.trim() || providers.find(p => p.id === provider)?.name || provider, apiKey: apiKey.trim() }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Could not save provider key.");
+
+      setApiKey("");
+      setLabel("");
+      await loadCredentials();
+
+      const keyResponse = await fetch("/api/virtual-keys");
+      const keyData = await keyResponse.json();
+      const activeKeys = (keyData.keys || []).filter((key: VirtualKey) => !key.revoked_at);
+      if (activeKeys.length === 0) {
+        const createResponse = await fetch("/api/virtual-keys", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: "API-FLOW Master Key" }),
+        });
+        const created = await createResponse.json();
+        if (!createResponse.ok) throw new Error(created.error || "Provider key saved, but virtual key creation failed. Create one in Virtual API keys.");
+        setVirtualSecret(created.secret);
+        setNotice("Your provider key is saved and your first API-FLOW virtual key has been created.");
+      } else {
+        setNotice("Provider key added to your routing pool. Your existing API-FLOW virtual key can use it.");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function setCredentialEnabled(item: Credential) {
+    setError("");
+    const response = await fetch("/api/provider-credentials", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: item.id, enabled: !item.enabled }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) setError(data.error || "Could not update this key.");
+    else await loadCredentials();
+  }
+
+  async function deleteCredential(id: string) {
+    if (!window.confirm("Remove this provider key from your API-FLOW routing pool?")) return;
+    setError("");
+    const response = await fetch("/api/provider-credentials?id=" + encodeURIComponent(id), { method: "DELETE" });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) setError(data.error || "Could not delete this key.");
+    else await loadCredentials();
+  }
+
+  async function copyVirtualKey() {
+    await navigator.clipboard.writeText(virtualSecret);
+    setCopied(true);
+  }
+
+  const enabledCount = credentials.filter(item => item.enabled).length;
+  const providerName = (id: string) => providers.find(item => item.id === id)?.name || id;
+
+  return (
+    <main className="console-shell">
+      <aside className="console-sidebar">
+        <Link href="/" className="console-brand">API-<b>FLOW</b></Link>
+        <div className="console-nav-label">WORKSPACE</div>
+        <Link className="console-nav" href="/dashboard"><Activity size={17}/> Overview</Link>
+        <Link className="console-nav active" href="/dashboard/providers"><Layers3 size={17}/> Provider keys</Link>
+        <Link className="console-nav" href="/dashboard/keys"><KeyRound size={17}/> Virtual API keys</Link>
+        <Link className="console-nav" href="/dashboard/usage"><Activity size={17}/> Usage &amp; analytics</Link>
+        <Link className="console-nav" href="/dashboard/playground"><Zap size={17}/> Playground</Link>
+        <div className="console-sidebar-bottom"><ShieldCheck size={16}/> Encrypted credential vault</div>
+      </aside>
+
+      <section className="console-main provider-page">
+        <header className="console-topbar">
+          <div><span className="console-eyebrow">WORKSPACE / PROVIDER KEYS</span><h1>Connect your AI providers</h1></div>
+          <Link className="console-signout" href="/dashboard/keys">Virtual keys <ArrowRight size={14}/></Link>
+        </header>
+
+        <section className="provider-hero">
+          <div className="provider-hero-copy">
+            <span className="provider-kicker"><Zap size={13}/> ONE GATEWAY. ALL YOUR KEYS.</span>
+            <h2>Add your provider keys.<br/><em>API-FLOW does the routing.</em></h2>
+            <p>Connect two, three, or more provider credentials. API-FLOW keeps them in your private routing pool and gives your applications one API key to use.</p>
+            <div className="provider-stats">
+              <div><b>{credentials.length}</b><span>Saved keys</span></div>
+              <div><b>{enabledCount}</b><span>Enabled for routing</span></div>
+              <div><b>1</b><span>Unified API</span></div>
+            </div>
+          </div>
+          <div className="provider-flow-card">
+            <div className="provider-flow-row"><span className="provider-flow-icon"><KeyRound size={17}/></span><div><b>Your provider keys</b><small>Groq · OpenAI · Gemini · more</small></div><Check size={17}/></div>
+            <div className="provider-flow-connector"><i/><i/><i/></div>
+            <div className="provider-flow-engine"><Layers3 size={24}/><b>API-FLOW ROUTER</b><small>One endpoint · fallback routing</small></div>
+            <div className="provider-flow-connector"><i/><i/><i/></div>
+            <div className="provider-flow-row virtual"><span className="provider-flow-icon"><LockKeyhole size={17}/></span><div><b>One virtual API key</b><small>Use it in all your applications</small></div><Check size={17}/></div>
+          </div>
+        </section>
+
+        <div className="provider-section-heading"><div><span className="console-eyebrow">STEP 01</span><h2>Add provider credentials</h2><p>Add one key at a time. You can add multiple keys from the same provider too.</p></div><span className="provider-secure"><LockKeyhole size={14}/> Encrypted storage</span></div>
+
+        <div className="provider-workspace">
+          <form className="provider-add-card" onSubmit={addCredential}>
+            <div className="provider-card-title"><span><Plus size={17}/></span><div><b>Connect a provider</b><small>Your secret key stays on the server.</small></div></div>
+            <label htmlFor="provider-select">Choose provider</label>
+            <div className="provider-select-wrap"><select id="provider-select" value={provider} onChange={event => setProvider(event.target.value)}>{providers.map(item => <option key={item.id} value={item.id}>{item.name} — {item.detail}</option>)}</select><ChevronDown size={16}/></div>
+            <label htmlFor="provider-label">Key label <small>(optional)</small></label>
+            <input id="provider-label" value={label} onChange={event => setLabel(event.target.value)} placeholder="e.g. Groq backup key"/>
+            <label htmlFor="provider-secret">Provider API key</label>
+            <div className="provider-secret-wrap"><input id="provider-secret" type={showSecret ? "text" : "password"} autoComplete="off" spellCheck={false} value={apiKey} onChange={event => setApiKey(event.target.value)} placeholder="Paste your provider secret key"/><button type="button" aria-label={showSecret ? "Hide API key" : "Show API key"} onClick={() => setShowSecret(value => !value)}>{showSecret ? <EyeOff size={17}/> : <Eye size={17}/>}</button></div>
+            <button className="provider-add-button" type="submit" disabled={busy || apiKey.trim().length < 12}>{busy ? <><LoaderCircle className="spin" size={17}/> Saving key...</> : <><Plus size={17}/> Add key to API-FLOW</>}</button>
+            <p className="provider-encryption-note"><ShieldCheck size={14}/> Credentials are encrypted before storage and never displayed again.</p>
+          </form>
+
+          <section className="provider-list-card">
+            <div className="provider-list-heading"><div><b>Your routing pool</b><small>Manage which credentials API-FLOW can use.</small></div><button type="button" onClick={() => void loadCredentials()} aria-label="Refresh provider keys"><RefreshCw size={15}/></button></div>
+            {loading ? <div className="provider-list-empty"><LoaderCircle className="spin" size={22}/> Loading your keys...</div> :
+              credentials.length === 0 ? <div className="provider-list-empty"><span><KeyRound size={23}/></span><b>No provider keys yet</b><p>Add your first provider key. API-FLOW will automatically create your first virtual key if you do not already have one.</p></div> :
+              <div className="provider-credential-list">{credentials.map(item => <article className="provider-credential" key={item.id}><span className="provider-credential-mark">{providers.find(p => p.id === item.provider)?.mark || "K"}</span><div className="provider-credential-info"><b>{item.label}</b><small>{providerName(item.provider)} · •••• {item.last_four || "hidden"}</small></div><span className={item.enabled ? "provider-enabled" : "provider-paused"}><i/>{item.enabled ? "Enabled" : "Paused"}</span><button type="button" className="provider-icon-action" title={item.enabled ? "Pause key" : "Enable key"} onClick={() => void setCredentialEnabled(item)}><Power size={15}/></button><button type="button" className="provider-icon-action remove" title="Remove key" onClick={() => void deleteCredential(item.id)}><Trash2 size={15}/></button></article>)}</div>}
+            <div className="provider-list-foot"><CircleHelp size={14}/> Paused keys are excluded from routing. Removing a key is permanent.</div>
+          </section>
+        </div>
+
+        {error && <p className="auth-error">{error}</p>}
+        {notice && <p className="auth-notice"><Check size={15}/>{notice}</p>}
+
+        {virtualSecret && <section className="provider-created-key"><div><span className="provider-kicker"><Check size={13}/> VIRTUAL KEY CREATED</span><h3>Your one API-FLOW key is ready.</h3><p>Copy it now. You will use this same key even when you add more provider credentials.</p></div><code>{virtualSecret}</code><button type="button" onClick={copyVirtualKey}><Copy size={15}/>{copied ? "Copied" : "Copy virtual key"}</button><Link href="/dashboard/playground">Test your key <ArrowRight size={14}/></Link></section>}
+
+        <section className="provider-next-step"><div><span className="provider-step-number">02</span><div><b>Use one API-FLOW virtual key</b><small>Your app never needs to know which provider key is selected.</small></div></div><Link href="/dashboard/keys">Manage virtual keys <ArrowRight size={15}/></Link></section>
+        <p className="usage-disclaimer">Routing currently supports retryable-error fallback across enabled credentials. Provider health checks, quota-aware selection, and cost/latency-optimized load balancing are future upgrades.</p>
+      </section>
+    </main>
+  );
 }
