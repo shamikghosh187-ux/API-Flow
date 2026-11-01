@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Activity, ArrowUpRight, Boxes, Clock3, KeyRound, ShieldCheck, Terminal, TrendingUp } from "lucide-react";
+import { Activity, Boxes, Clock3, KeyRound, ShieldCheck, Terminal, TrendingUp } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
