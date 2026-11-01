@@ -21,7 +21,7 @@ function error(message: string, status: number, type = "api_error") {
 }
 
 function shouldRetry(status: number) {
-  return status === 408 || status === 409 || status === 425 || status === 429 || status >= 500;
+  return status === 401 || status === 402 || status === 403 || status === 408 || status === 409 || status === 425 || status === 429 || status >= 500;
 }
 
 type Attempt = { provider: ProviderConfig; model: string; key: string; keyIndex: number };
@@ -58,8 +58,14 @@ export async function POST(request: NextRequest) {
   let lastStatus = 502;
   let lastMessage = "All configured provider keys failed.";
   let attemptsMade = 0;
+  const deadline = Date.now() + 50000;
 
   for (const attempt of attempts) {
+    const remaining = deadline - Date.now();
+    if (remaining <= 1000) {
+      lastMessage = "Failover time budget reached before all keys could be tried.";
+      break;
+    }
     attemptsMade += 1;
     const { provider, model, key, keyIndex } = attempt;
     try {
@@ -71,7 +77,7 @@ export async function POST(request: NextRequest) {
         },
         body: JSON.stringify({ ...parsed.data, model, stream: false }),
         cache: "no-store",
-        signal: AbortSignal.timeout(20000),
+        signal: AbortSignal.timeout(Math.min(12000, remaining - 250)),
       });
 
       if (upstream.ok) {
