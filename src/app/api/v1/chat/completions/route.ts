@@ -22,7 +22,6 @@ export async function POST(request:NextRequest){
  if(!token.startsWith("af_live_"))return err("A valid API-FLOW virtual key is required.",401,"authentication_error");
  let body:unknown;try{body=await request.json()}catch{return err("Request body must be valid JSON.",400,"invalid_request_error")}
  const parsed=schema.safeParse(body);if(!parsed.success)return err("Invalid chat completion request.",400,"invalid_request_error");
- if(parsed.data.stream)return err("Streaming is not available yet. Use stream:false.",400,"unsupported_feature");
  let admin;try{admin=createAdminClient()}catch{return err("Gateway server configuration is incomplete.",503,"configuration_error")}
  const digest=hashToken(token);
  const {data:key,error:keyError}=await admin.from("api_keys").select("id,user_id").eq("key_hash",digest).is("revoked_at",null).maybeSingle();
@@ -40,7 +39,7 @@ export async function POST(request:NextRequest){
   if(requestedProvider){const ap=a.provider===requestedProvider?0:1,bp=b.provider===requestedProvider?0:1;return ap-bp||a.priority-b.priority}
   return a.priority-b.priority;
  });
- const deadline=Date.now()+50000;let attempts=0,lastMessage="Provider keys unavailable.";let usedProvider="other";let result:unknown=null;let usedCredential:string|null=null;
+ const deadline=Date.now()+50000;let attempts=0,lastMessage="Provider keys unavailable.";let usedProvider="other";let result:unknown=null;let usedCredential:string|null=null;let streamResponse:Response|null=null;
  for(const row of ordered){
   if(Date.now()>deadline-700)break;
   const config=bases[row.provider];if(!config)continue;
@@ -48,13 +47,28 @@ export async function POST(request:NextRequest){
   try{
    const secret=decryptSecret(row.encrypted_secret);
    const model=(requestedProvider===row.provider?requestedModel:requestedProvider?"":requestedModel)||config.model;
-   const upstream=await fetch(config.url+"/chat/completions",{method:"POST",headers:{"Authorization":"Bearer "+secret,"Content-Type":"application/json"},body:JSON.stringify({...parsed.data,model,stream:false}),cache:"no-store",signal:AbortSignal.timeout(Math.min(12000,deadline-Date.now()-250))});
-   if(upstream.ok){result=await upstream.json();break}
+   const upstream=await fetch(config.url+"/chat/completions",{method:"POST",headers:{"Authorization":"Bearer "+secret,"Content-Type":"application/json"},body:JSON.stringify({...parsed.data,model,stream:parsed.data.stream===true}),cache:"no-store",signal:AbortSignal.timeout(Math.min(12000,deadline-Date.now()-250))});
+   if(upstream.ok){if(parsed.data.stream){streamResponse=upstream;}else{result=await upstream.json();}break}
    lastMessage=row.provider+" returned HTTP "+upstream.status;
    if(!retry(upstream.status))return err(lastMessage,upstream.status,"provider_error");
   }catch(e){lastMessage=e instanceof Error?e.message:"Provider request failed";}
  }
  const latency=Date.now()-started;
+ if(streamResponse?.body){
+  await Promise.all([
+   admin.from("api_keys").update({last_used_at:new Date().toISOString()}).eq("id",key.id),
+   admin.from("provider_credentials").update({last_used_at:new Date().toISOString(),last_error_at:null,last_error_code:null}).eq("id",usedCredential),
+   admin.from("usage_events").insert({user_id:key.user_id,api_key_id:key.id,provider:["groq","openrouter"].includes(usedProvider)?usedProvider:"other",model:parsed.data.model,status_code:200,latency_ms:latency})
+  ]);
+  return new Response(streamResponse.body,{status:streamResponse.status,headers:{
+   "content-type":streamResponse.headers.get("content-type")||"text/event-stream; charset=utf-8",
+   "cache-control":"no-cache, no-transform",
+   "x-api-flow-provider":usedProvider,
+   "x-api-flow-attempts":String(attempts),
+   "x-api-flow-fallback":String(attempts>1),
+   "x-api-flow-latency-ms":String(latency)
+  }});
+ }
  if(!result){
   await admin.from("usage_events").insert({user_id:key.user_id,api_key_id:key.id,provider:["groq","openrouter"].includes(usedProvider)?usedProvider:"other",model:parsed.data.model,status_code:502,latency_ms:latency});
   return err("All "+attempts+" configured provider key attempts failed. Last issue: "+lastMessage,502,"upstream_error");
