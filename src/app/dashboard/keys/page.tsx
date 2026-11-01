@@ -1,5 +1,5 @@
-import Link from "next/link";
 "use client";
+import Link from "next/link";
 import {useEffect,useState} from "react";
 type ApiKey={id:string;name:string;key_prefix:string;created_at:string;revoked_at:string|null};
 export default function KeysPage(){
