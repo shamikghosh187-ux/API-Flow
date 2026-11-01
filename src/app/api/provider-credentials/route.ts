@@ -4,7 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { encryptSecret, hashToken } from "@/lib/crypto";
 
 export const runtime = "nodejs";
-const allowed = new Set(["groq","openrouter","openai","deepseek","mistral","anthropic","google"]);
+const allowed = new Set(["groq","openrouter","openai","deepseek","mistral","google"]);
 
 export async function GET() {
   const supabase = await createClient();
