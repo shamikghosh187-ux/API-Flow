@@ -42,7 +42,7 @@ Example:
 
 Supported model prefixes: `groq/`, `openrouter/`, `openai/`, `deepseek/`, `mistral/`. Without a prefix, the first configured provider is selected.
 
-The initial gateway release supports non-streaming chat completions. If the selected provider is unavailable or rate-limited, the gateway attempts other configured providers using their default models. Streaming, per-user API keys, persistent usage records, and dashboard analytics are planned follow-up milestones.
+The gateway currently supports non-streaming chat completions and sequential failover across multiple keys per provider, followed by other configured providers. Configure a single key with `GROQ_API_KEY` or a comma-separated pool with `GROQ_API_KEYS=key_one,key_two,key_three` (same pattern for OpenRouter, OpenAI, DeepSeek, and Mistral). When a key is unauthorized, out of credits, rate-limited, unavailable, or times out, API-FLOW tries the next key; after that provider's keys are exhausted, it tries the next configured provider using that provider's default model. Non-retryable request errors are returned immediately. Each response includes `x-api-flow-provider`, `x-api-flow-fallback`, `x-api-flow-key-index`, and `x-api-flow-attempts` headers. The route has a bounded failover time budget. Streaming, per-user API keys, persistent usage records, and dashboard analytics remain future milestones.
 
 ## Security
 
