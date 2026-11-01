@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import {useEffect,useRef,useState} from "react";
-import {Activity,ArrowLeft,ArrowUpRight,Copy,LoaderCircle,Play,RotateCcw,Terminal,Zap} from "lucide-react";
+import {Activity,ArrowLeft,ArrowUpRight,LoaderCircle,Play,RotateCcw,Terminal,Zap} from "lucide-react";
 
 type Message={role:"user"|"assistant";content:string};
 const models=[
