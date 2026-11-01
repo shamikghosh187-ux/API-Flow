@@ -1,111 +1,68 @@
-import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { getFallbackProviders, resolveProvider, type ProviderConfig } from "@/lib/providers";
-
-export const runtime = "nodejs";
-export const maxDuration = 60;
-
-const requestSchema = z.object({
-  model: z.string().min(1),
-  messages: z.array(z.object({
-    role: z.enum(["system", "user", "assistant", "tool"]),
-    content: z.union([z.string(), z.array(z.unknown())]),
-  })).min(1),
-  temperature: z.number().min(0).max(2).optional(),
-  max_tokens: z.number().int().positive().optional(),
-  stream: z.boolean().optional(),
-}).passthrough();
-
-function error(message: string, status: number, type = "api_error") {
-  return NextResponse.json({ error: { message, type } }, { status });
-}
-
-function shouldRetry(status: number) {
-  return status === 401 || status === 402 || status === 403 || status === 408 || status === 409 || status === 425 || status === 429 || status >= 500;
-}
-
-type Attempt = { provider: ProviderConfig; model: string; key: string; keyIndex: number };
-
-export async function POST(request: NextRequest) {
-  const gatewayKey = process.env.API_FLOW_MASTER_KEY;
-  if (!gatewayKey) return error("Gateway authentication is not configured.", 503, "configuration_error");
-
-  const authorization = request.headers.get("authorization");
-  if (authorization !== `Bearer ${gatewayKey}`) return error("Invalid API key.", 401, "authentication_error");
-
-  let raw: unknown;
-  try { raw = await request.json(); } catch { return error("Request body must be valid JSON.", 400, "invalid_request_error"); }
-  const parsed = requestSchema.safeParse(raw);
-  if (!parsed.success) return error("Invalid chat completion request.", 400, "invalid_request_error");
-
-  if (parsed.data.stream) {
-    return error("Streaming is not available yet. Send stream:false or omit stream.", 400, "unsupported_feature");
-  }
-
-  const selected = resolveProvider(parsed.data.model);
-  if (!selected) return error("No configured provider matches this model. Check the model prefix and server-side provider keys.", 503, "provider_unavailable");
-
-  const providers = [selected.provider, ...getFallbackProviders(selected.provider.id)];
-  const attempts: Attempt[] = providers.flatMap((provider) =>
-    provider.apiKeys.map((key, index) => ({
-      provider,
-      model: provider.id === selected.provider.id ? selected.model : provider.defaultModel,
-      key,
-      keyIndex: index + 1,
-    })),
-  );
-
-  let lastStatus = 502;
-  let lastMessage = "All configured provider keys failed.";
-  let attemptsMade = 0;
-  const deadline = Date.now() + 50000;
-
-  for (const attempt of attempts) {
-    const remaining = deadline - Date.now();
-    if (remaining <= 1000) {
-      lastMessage = "Failover time budget reached before all keys could be tried.";
-      break;
-    }
-    attemptsMade += 1;
-    const { provider, model, key, keyIndex } = attempt;
-    try {
-      const upstream = await fetch(`${provider.baseUrl}/chat/completions`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${key}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ ...parsed.data, model, stream: false }),
-        cache: "no-store",
-        signal: AbortSignal.timeout(Math.min(12000, remaining - 250)),
-      });
-
-      if (upstream.ok) {
-        const payload = await upstream.json();
-        return NextResponse.json(payload, {
-          headers: {
-            "x-api-flow-provider": provider.id,
-            "x-api-flow-fallback": provider.id === selected.provider.id && keyIndex === 1 ? "false" : "true",
-            "x-api-flow-key-index": String(keyIndex),
-            "x-api-flow-attempts": String(attemptsMade),
-          },
-        });
-      }
-
-      lastStatus = upstream.status;
-      lastMessage = `${provider.id} key ${keyIndex} returned HTTP ${upstream.status}.`;
-      if (!shouldRetry(upstream.status)) {
-        return error(lastMessage, upstream.status, "provider_error");
-      }
-    } catch {
-      lastStatus = 502;
-      lastMessage = `${provider.id} key ${keyIndex} could not be reached or timed out.`;
-    }
-  }
-
-  return error(
-    `All ${attemptsMade} configured key attempt(s) failed. Last issue: ${lastMessage}`,
-    lastStatus >= 500 || shouldRetry(lastStatus) ? 502 : lastStatus,
-    "upstream_error",
-  );
+import {NextRequest,NextResponse} from "next/server";
+import {z} from "zod";
+import {createAdminClient} from "@/lib/supabase/admin";
+import {decryptSecret,hashToken} from "@/lib/crypto";
+export const runtime="nodejs";
+export const maxDuration=60;
+const schema=z.object({model:z.string().min(1),messages:z.array(z.object({role:z.enum(["system","user","assistant","tool"]),content:z.union([z.string(),z.array(z.unknown())])})).min(1),temperature:z.number().min(0).max(2).optional(),max_tokens:z.number().int().positive().optional(),stream:z.boolean().optional()}).passthrough();
+const bases:Record<string,{url:string;model:string}>={
+ groq:{url:"https://api.groq.com/openai/v1",model:"llama-3.3-70b-versatile"},
+ openrouter:{url:"https://openrouter.ai/api/v1",model:"openai/gpt-4o-mini"},
+ openai:{url:"https://api.openai.com/v1",model:"gpt-4o-mini"},
+ deepseek:{url:"https://api.deepseek.com/v1",model:"deepseek-chat"},
+ mistral:{url:"https://api.mistral.ai/v1",model:"mistral-small-latest"},
+ anthropic:{url:"https://api.anthropic.com/v1",model:"claude-3-5-haiku-latest"},
+ google:{url:"https://generativelanguage.googleapis.com/v1beta/openai",model:"gemini-2.5-flash"}
+};
+const retry=(s:number)=>[401,402,403,408,409,425,429].includes(s)||s>=500;
+const err=(message:string,status:number,type="api_error")=>NextResponse.json({error:{message,type}},{status});
+export async function POST(request:NextRequest){
+ const auth=request.headers.get("authorization")||"";
+ const token=auth.startsWith("Bearer ")?auth.slice(7):"";
+ if(!token.startsWith("af_live_"))return err("A valid API-FLOW virtual key is required.",401,"authentication_error");
+ let body:unknown;try{body=await request.json()}catch{return err("Request body must be valid JSON.",400,"invalid_request_error")}
+ const parsed=schema.safeParse(body);if(!parsed.success)return err("Invalid chat completion request.",400,"invalid_request_error");
+ if(parsed.data.stream)return err("Streaming is not available yet. Use stream:false.",400,"unsupported_feature");
+ let admin;try{admin=createAdminClient()}catch{return err("Gateway server configuration is incomplete.",503,"configuration_error")}
+ const digest=hashToken(token);
+ const {data:key,error:keyError}=await admin.from("api_keys").select("id,user_id").eq("key_hash",digest).is("revoked_at",null).maybeSingle();
+ if(keyError||!key)return err("Invalid or revoked API-FLOW key.",401,"authentication_error");
+ const started=Date.now();
+ const {data:rows,error:credentialError}=await admin.from("provider_credentials").select("id,provider,encrypted_secret,priority,enabled").eq("user_id",key.user_id).eq("enabled",true).order("priority",{ascending:true});
+ if(credentialError)return err("Could not load provider credentials.",503,"configuration_error");
+ if(!rows?.length)return err("No enabled provider keys. Add keys in your API-FLOW dashboard.",503,"provider_unavailable");
+ const requested=parsed.data.model;
+ const slash=requested.indexOf("/");
+ const requestedProvider=slash>0?requested.slice(0,slash).toLowerCase():"";
+ const requestedModel=slash>0?requested.slice(slash+1):requested;
+ if(requestedProvider&&!bases[requestedProvider])return err("Unknown provider prefix. Supported: groq, openrouter, openai, deepseek, mistral, anthropic, google.",400,"invalid_request_error");
+ const ordered=[...rows].sort((a,b)=>{
+  if(requestedProvider){const ap=a.provider===requestedProvider?0:1,bp=b.provider===requestedProvider?0:1;return ap-bp||a.priority-b.priority}
+  return a.priority-b.priority;
+ });
+ const deadline=Date.now()+50000;let attempts=0,lastStatus=502,lastMessage="Provider keys unavailable.";let usedProvider="other";let result:unknown=null;let usedCredential:string|null=null;
+ for(const row of ordered){
+  if(Date.now()>deadline-700)break;
+  const config=bases[row.provider];if(!config)continue;
+  attempts++;usedProvider=row.provider;usedCredential=row.id;
+  try{
+   const secret=decryptSecret(row.encrypted_secret);
+   const model=(requestedProvider===row.provider?requestedModel:requestedProvider?"":requestedModel)||config.model;
+   const upstream=await fetch(config.url+"/chat/completions",{method:"POST",headers:{"Authorization":"Bearer "+secret,"Content-Type":"application/json"},body:JSON.stringify({...parsed.data,model,stream:false}),cache:"no-store",signal:AbortSignal.timeout(Math.min(12000,deadline-Date.now()-250))});
+   if(upstream.ok){result=await upstream.json();lastStatus=upstream.status;break}
+   lastStatus=upstream.status;lastMessage=row.provider+" returned HTTP "+upstream.status;
+   if(!retry(upstream.status))return err(lastMessage,upstream.status,"provider_error");
+  }catch(e){lastStatus=502;lastMessage=e instanceof Error?e.message:"Provider request failed";}
+ }
+ const latency=Date.now()-started;
+ if(!result){
+  await admin.from("usage_events").insert({user_id:key.user_id,api_key_id:key.id,provider:["groq","openrouter"].includes(usedProvider)?usedProvider:"other",model:parsed.data.model,status_code:502,latency_ms:latency});
+  return err("All "+attempts+" configured provider key attempts failed. Last issue: "+lastMessage,502,"upstream_error");
+ }
+ await Promise.all([
+  admin.from("api_keys").update({last_used_at:new Date().toISOString()}).eq("id",key.id),
+  admin.from("provider_credentials").update({last_used_at:new Date().toISOString(),last_error_at:null,last_error_code:null}).eq("id",usedCredential),
+  admin.from("usage_events").insert({user_id:key.user_id,api_key_id:key.id,provider:["groq","openrouter"].includes(usedProvider)?usedProvider:"other",model:parsed.data.model,status_code:200,latency_ms:latency,input_tokens:(result as any)?.usage?.prompt_tokens??null,output_tokens:(result as any)?.usage?.completion_tokens??null})
+ ]);
+ return NextResponse.json(result,{headers:{"x-api-flow-provider":usedProvider,"x-api-flow-attempts":String(attempts),"x-api-flow-fallback":String(attempts>1),"x-api-flow-latency-ms":String(latency)}});
 }
