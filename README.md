@@ -1,38 +1,65 @@
 # API-FLOW
 
-A provider-agnostic AI API gateway with intelligent routing, provider failover, usage visibility, and an OpenAI-compatible interface.
+A multi-tenant, BYOK AI gateway. Developers connect their own provider credentials, generate one API-FLOW virtual key, and use a single OpenAI-compatible endpoint in supported applications.
 
 ## Stack
-
 - Next.js App Router + TypeScript
-- Tailwind CSS v4
-- Zod request validation
-- Vercel-ready Node.js route handlers
+- Supabase Auth (email OTP + password)
+- Supabase Postgres
+- AES-256-GCM encrypted provider credentials
+- Vercel Node.js route handlers
 
-## Local development
+## Required environment variables
 
-1. Install Node.js 20.9 or newer.
-2. Copy `.env.example` to `.env.local`.
-3. Set `API_FLOW_MASTER_KEY` to a long random secret.
-4. Add at least one server-side provider key.
-5. Run `npm install` and `npm run dev`.
+Set these in Vercel (Production, Preview and Development as appropriate), then redeploy:
 
-## API
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_PUBLISHABLE_OR_ANON_KEY
+SUPABASE_SERVICE_ROLE_KEY=YOUR_SERVER_ONLY_SERVICE_ROLE_OR_SECRET_KEY
+PROVIDER_KEYS_ENCRYPTION_SECRET=YOUR_RANDOM_SECRET_AT_LEAST_32_CHARACTERS
+APP_URL=https://api-flow-rosy.vercel.app
+```
 
-### Health
+Never expose the service-role/secret key or encryption secret through a `NEXT_PUBLIC_*` variable or commit them to Git.
 
-`GET /api/health`
+Generate an encryption secret locally with:
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+```
 
-Returns service status and the names of configured providers. It never returns provider credentials.
+## Authentication
+1. Sign up with an email address.
+2. Verify the one-time code sent by Supabase Auth.
+3. Create a password.
+4. Sign in using email and password.
 
-### Chat completions
+Supabase Auth hashes and manages passwords; API-FLOW does not store plaintext passwords. Configure the Supabase Auth email template to include `{{ .Token }}` for OTP, and set the production Site URL and redirect allow-list.
 
-`POST /api/v1/chat/completions`
+## BYOK workflow
+1. Add one or more provider keys in **Dashboard → Providers**.
+2. Provider secrets are encrypted using AES-256-GCM before being stored in `provider_credentials`.
+3. Generate an API-FLOW virtual key in **Dashboard → Virtual API keys**. Its plaintext is shown once; only its SHA-256 hash is stored.
+4. Use the virtual key from a server-side application.
 
-Authenticate with `Authorization: Bearer <API_FLOW_MASTER_KEY>`. The request body follows the common OpenAI chat-completions shape.
+Supported provider IDs: `groq`, `openrouter`, `openai`, `deepseek`, `mistral`, `anthropic`, `google`.
+
+## OpenAI-compatible API
+
+Base URL:
+```
+https://api-flow-rosy.vercel.app/api/v1
+```
+
+Endpoint: `POST /chat/completions`
+
+Headers:
+```
+Authorization: Bearer af_live_YOUR_VIRTUAL_KEY
+Content-Type: application/json
+```
 
 Example:
-
 ```json
 {
   "model": "groq/llama-3.3-70b-versatile",
@@ -40,17 +67,20 @@ Example:
 }
 ```
 
-Supported model prefixes: `groq/`, `openrouter/`, `openai/`, `deepseek/`, `mistral/`. Without a prefix, the first configured provider is selected.
+Use the provider prefix to select a preferred provider. If it fails with a retryable provider error, API-FLOW tries the other enabled credentials belonging to the same account. Other connected providers are then used as fallbacks with their configured default model. Never send provider secrets from a client-side/browser app.
 
-The gateway currently supports non-streaming chat completions and sequential failover across multiple keys per provider, followed by other configured providers. Configure a single key with `GROQ_API_KEY` or a comma-separated pool with `GROQ_API_KEYS=key_one,key_two,key_three` (same pattern for OpenRouter, OpenAI, DeepSeek, and Mistral). When a key is unauthorized, out of credits, rate-limited, unavailable, or times out, API-FLOW tries the next key; after that provider's keys are exhausted, it tries the next configured provider using that provider's default model. Non-retryable request errors are returned immediately. Each response includes `x-api-flow-provider`, `x-api-flow-fallback`, `x-api-flow-key-index`, and `x-api-flow-attempts` headers. The route has a bounded failover time budget. Streaming, per-user API keys, persistent usage records, and dashboard analytics remain future milestones.
+Current limitation: non-streaming chat completions only. Streaming, richer model catalogs, provider-specific request translation, per-key quotas, and detailed billing are not implemented yet.
 
-## Security
+## Security model
+- Each virtual key is tied to one Supabase user and stored as a hash.
+- Every provider credential query is scoped to the authenticated virtual key's owner.
+- Provider secrets are AES-256-GCM encrypted at rest; the encryption secret exists only in the server environment.
+- The provider credential table has RLS enabled and no direct anon/authenticated table grants; application access is server-side.
+- Usage records store metadata only, not prompts or completions.
 
-- Provider keys are read only from server-side environment variables.
-- The gateway rejects requests unless `API_FLOW_MASTER_KEY` is configured.
-- Never commit `.env.local` or expose provider keys through `NEXT_PUBLIC_*` variables.
-- Do not use one shared master key as a public production credential. Per-user keys and quotas must be implemented before opening access to customers.
-
-## Design
-
-Deep black and charcoal surfaces, crimson accents, restrained texture, and clear typography.
+## Local development
+Install dependencies, copy `.env.example` to `.env.local`, fill the required values, and run:
+```bash
+npm install
+npm run dev
+```
