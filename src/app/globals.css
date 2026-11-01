@@ -242,3 +242,8 @@ a{color:inherit;text-decoration:none}
 .usage-empty{padding:35px 15px;text-align:center;color:#95898e;font-size:12px;line-height:1.7}.usage-disclaimer{margin:13px 0;color:#857a7f;font-size:10px;line-height:1.7}
 @media(max-width:850px){.usage-panels{grid-template-columns:1fr}.usage-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:520px){.usage-metrics{grid-template-columns:1fr}.usage-panel,.usage-table-panel{padding:14px}.usage-bars{gap:6px}}
+
+/* Multi-key routing pool explainer */
+.routing-explainer{margin:16px 0 22px;padding:19px 21px;border:1px solid rgba(255,49,88,.28);border-radius:13px;background:linear-gradient(120deg,rgba(237,18,61,.08),rgba(255,255,255,.02))}
+.routing-explainer>b{font-size:14px;color:#fff}.routing-explainer>p{max-width:850px;margin:8px 0 14px;color:#b8acb1;font-size:12px;line-height:1.75}.routing-explainer code{padding:3px 6px;border-radius:5px;background:#211117;color:#ff9aae}
+.routing-pills{display:flex;flex-wrap:wrap;gap:8px}.routing-pills span{padding:7px 10px;border:1px solid rgba(255,255,255,.1);border-radius:30px;color:#e0d5d9;font-size:10px;background:rgba(0,0,0,.2)}
