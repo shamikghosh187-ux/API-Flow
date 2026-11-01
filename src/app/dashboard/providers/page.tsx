@@ -1,5 +1,5 @@
-import Link from "next/link";
 "use client";
+import Link from "next/link";
 import {useEffect,useState} from "react";
 type Item={id:string;provider:string;label:string;enabled:boolean;last_four:string|null};
 const options=["groq","openrouter","openai","deepseek","mistral","anthropic","google"];
