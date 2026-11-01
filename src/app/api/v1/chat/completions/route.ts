@@ -40,7 +40,7 @@ export async function POST(request:NextRequest){
   if(requestedProvider){const ap=a.provider===requestedProvider?0:1,bp=b.provider===requestedProvider?0:1;return ap-bp||a.priority-b.priority}
   return a.priority-b.priority;
  });
- const deadline=Date.now()+50000;let attempts=0,lastStatus=502,lastMessage="Provider keys unavailable.";let usedProvider="other";let result:unknown=null;let usedCredential:string|null=null;
+ const deadline=Date.now()+50000;let attempts=0,lastMessage="Provider keys unavailable.";let usedProvider="other";let result:unknown=null;let usedCredential:string|null=null;
  for(const row of ordered){
   if(Date.now()>deadline-700)break;
   const config=bases[row.provider];if(!config)continue;
@@ -49,10 +49,10 @@ export async function POST(request:NextRequest){
    const secret=decryptSecret(row.encrypted_secret);
    const model=(requestedProvider===row.provider?requestedModel:requestedProvider?"":requestedModel)||config.model;
    const upstream=await fetch(config.url+"/chat/completions",{method:"POST",headers:{"Authorization":"Bearer "+secret,"Content-Type":"application/json"},body:JSON.stringify({...parsed.data,model,stream:false}),cache:"no-store",signal:AbortSignal.timeout(Math.min(12000,deadline-Date.now()-250))});
-   if(upstream.ok){result=await upstream.json();lastStatus=upstream.status;break}
-   lastStatus=upstream.status;lastMessage=row.provider+" returned HTTP "+upstream.status;
+   if(upstream.ok){result=await upstream.json();break}
+   lastMessage=row.provider+" returned HTTP "+upstream.status;
    if(!retry(upstream.status))return err(lastMessage,upstream.status,"provider_error");
-  }catch(e){lastStatus=502;lastMessage=e instanceof Error?e.message:"Provider request failed";}
+  }catch(e){lastMessage=e instanceof Error?e.message:"Provider request failed";}
  }
  const latency=Date.now()-started;
  if(!result){
@@ -62,7 +62,7 @@ export async function POST(request:NextRequest){
  await Promise.all([
   admin.from("api_keys").update({last_used_at:new Date().toISOString()}).eq("id",key.id),
   admin.from("provider_credentials").update({last_used_at:new Date().toISOString(),last_error_at:null,last_error_code:null}).eq("id",usedCredential),
-  admin.from("usage_events").insert({user_id:key.user_id,api_key_id:key.id,provider:["groq","openrouter"].includes(usedProvider)?usedProvider:"other",model:parsed.data.model,status_code:200,latency_ms:latency,input_tokens:(result as any)?.usage?.prompt_tokens??null,output_tokens:(result as any)?.usage?.completion_tokens??null})
+  admin.from("usage_events").insert({user_id:key.user_id,api_key_id:key.id,provider:["groq","openrouter"].includes(usedProvider)?usedProvider:"other",model:parsed.data.model,status_code:200,latency_ms:latency,input_tokens:(result as {usage?:{prompt_tokens?:number}} | null)?.usage?.prompt_tokens??null,output_tokens:(result as {usage?:{completion_tokens?:number}} | null)?.usage?.completion_tokens??null})
  ]);
  return NextResponse.json(result,{headers:{"x-api-flow-provider":usedProvider,"x-api-flow-attempts":String(attempts),"x-api-flow-fallback":String(attempts>1),"x-api-flow-latency-ms":String(latency)}});
 }
