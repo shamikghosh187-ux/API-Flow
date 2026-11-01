@@ -19,7 +19,7 @@ function Header() {
     <nav className="main-nav" aria-label="Main navigation">
       {[["Home", "#"], ["Models", "#models"], ["Pricing", "#pricing"], ["Docs", "#docs"], ["Playground", "#playground"]].map(([label, href], i) => <a key={label} href={href} className={i === 0 ? "active" : ""}>{label}</a>)}
     </nav>
-    <a className="login-link" href="#login"><Code2 size={16} /> Console</a>
+    <Link className="login-link" href="/dashboard"><Code2 size={16} /> Console</Link>
   </header>;
 }
 
