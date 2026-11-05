@@ -1,116 +1,121 @@
-import Link from "next/link";
-import { Activity, ArrowDownUp, BarChart3, Check, CircleDot, Code2, Gauge, Network, ShieldCheck, Sparkles, Zap } from "lucide-react";
+"use client";
 
-const providers = [
-  { name: "OpenAI", model: "GPT-4o", mark: "◎", tone: "openai" },
-  { name: "Anthropic", model: "Claude 3.5", mark: "✳", tone: "anthropic" },
-  { name: "Google", model: "Gemini 2.5", mark: "G", tone: "google" },
-  { name: "Groq", model: "Llama 3.3", mark: "ϟ", tone: "groq" },
-  { name: "DeepSeek", model: "DeepSeek V3", mark: "◈", tone: "deepseek" },
+import { useState } from "react";
+import {
+  Atom, ArrowUp, ChevronDown, ChevronLeft, Plus, Search, BookOpen, FileText,
+  Settings2, Sparkles, Globe2, Paperclip, BrainCircuit, Microscope, FlaskConical,
+  History, PanelLeftClose, Command, Telescope, Orbit, Library, SlidersHorizontal,
+  MoreHorizontal, X, Check, Zap, Menu
+} from "lucide-react";
+
+const models = [
+  { provider: "OpenAI", model: "GPT-4o", mark: "◎", tone: "openai" },
+  { provider: "Anthropic", model: "Claude 3.7 Sonnet", mark: "✳", tone: "anthropic" },
+  { provider: "Google", model: "Gemini 2.5 Pro", mark: "G", tone: "google" },
+  { provider: "DeepSeek", model: "DeepSeek R1", mark: "◈", tone: "deepseek" },
+  { provider: "Groq", model: "Llama 3.3 70B", mark: "ϟ", tone: "groq" },
 ];
 
-function BrandMark() {
-  return <span className="brand-mark" aria-hidden="true"><span /><i /></span>;
-}
+const navItems = [
+  { label: "New research", icon: Plus },
+  { label: "Discover", icon: Search },
+  { label: "Research library", icon: Library },
+  { label: "Reports", icon: FileText },
+];
 
-function Header() {
-  return <header className="site-header">
-    <Link href="/" className="brand"><BrandMark /><span>API-<b>FLOW</b></span></Link>
-    <nav className="main-nav" aria-label="Main navigation">
-      {[["Home", "#"], ["Models", "#models"], ["Pricing", "#pricing"], ["Docs", "#docs"], ["Playground", "#playground"]].map(([label, href], i) => <a key={label} href={href} className={i === 0 ? "active" : ""}>{label}</a>)}
-    </nav>
-    <Link className="login-link" href="/dashboard"><Code2 size={16} /> Console</Link>
-  </header>;
-}
+const suggestions = [
+  { icon: Telescope, title: "Explore a scientific question", prompt: "What are the biggest open questions in astrophysics today?" },
+  { icon: BookOpen, title: "Analyze a research paper", prompt: "Help me understand a recent research paper about black holes." },
+  { icon: FlaskConical, title: "Develop a research idea", prompt: "Help me develop a testable research idea about exoplanets." },
+  { icon: Globe2, title: "Research across the web", prompt: "Research the latest discoveries about dark matter and cite sources." },
+];
 
-function ModelRouting() {
-  return <section className="visual-panel routing-panel">
-    <div className="panel-heading">
-      <span className="heading-icon"><Network size={17} /></span>
-      <div><strong>AI MODEL ROUTING</strong><small>Connected providers</small></div>
-      <span className="live-pill"><i /> LIVE</span>
-    </div>
-    <div className="provider-list">
-      {providers.map((p) => <div className="provider-node" key={p.name}>
-        <span className={"provider-mark " + p.tone}>{p.mark}</span>
-        <span className="provider-info"><b>{p.name}</b><small>{p.model}</small></span>
-        <span className="provider-status"><i />Online</span>
-      </div>)}
-    </div>
-    <div className="routing-footer"><span className="pulse-dot" /> 5 providers available <span className="route-tag">AUTO ROUTE</span></div>
-  </section>;
-}
-
-function RequestFlow() {
-  return <section className="flow-panel">
-    <div className="flow-label"><Zap size={15} /> REAL-TIME API FLOW</div>
-    <div className="flow-stage">
-      <div className="flow-endpoint"><Code2 size={20} /><b>Your App</b><small>POST /v1/chat</small></div>
-      <div className="flow-line"><i /><i /><i /></div>
-      <div className="router-core">
-        <div className="router-orbit orbit-one" /><div className="router-orbit orbit-two" />
-        <div className="router-icon"><BrandMark /></div><b>SMART<br />ROUTER</b><small>API-FLOW ENGINE</small>
-        <span className="router-chip"><Sparkles size={11} /> Best model selected</span>
-      </div>
-      <div className="flow-line reverse"><i /><i /><i /></div>
-      <div className="flow-result"><span className="result-check"><Check size={17} /></span><b>Response</b><small>200 · 842ms</small></div>
-    </div>
-    <div className="flow-bottom">
-      <span><CircleDot size={12} /> Request received</span>
-      <span><ArrowDownUp size={13} /> Intelligent routing</span>
-      <span><Check size={13} /> Response delivered</span>
-    </div>
-  </section>;
-}
-
-function DashboardPreview() {
-  return <section className="visual-panel dashboard-panel">
-    <div className="panel-heading">
-      <span className="heading-icon"><BarChart3 size={17} /></span>
-      <div><strong>DEVELOPER DASHBOARD</strong><small>Illustrative API performance</small></div>
-      <span className="live-pill"><i /> PREVIEW</span>
-    </div>
-    <div className="metric-grid">
-      <div className="metric-card"><span><Gauge size={15} /> LATENCY</span><b>842<small>ms</small></b><em>Sample</em></div>
-      <div className="metric-card"><span><Activity size={15} /> REQUESTS</span><b>12.8k</b><em>Sample</em></div>
-      <div className="metric-card"><span><ShieldCheck size={15} /> SUCCESS</span><b>99.9<small>%</small></b><em>Sample</em></div>
-    </div>
-    <div className="chart-card">
-      <div className="chart-title"><b>Request activity</b><span>ILLUSTRATIVE <i /></span></div>
-      <div className="chart-area">
-        <div className="chart-gridlines"><i /><i /><i /><i /></div>
-        <svg viewBox="0 0 420 100" preserveAspectRatio="none" aria-label="Illustrative request activity chart">
-          <defs><linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#ed123d" stopOpacity=".34" /><stop offset="1" stopColor="#ed123d" stopOpacity="0" /></linearGradient></defs>
-          <path d="M0 78 C24 72 34 78 54 62 S91 72 112 49 S145 59 169 42 S202 52 224 31 S255 50 281 38 S315 56 339 27 S378 42 420 10 L420 100 L0 100Z" fill="url(#chartFill)" />
-          <path d="M0 78 C24 72 34 78 54 62 S91 72 112 49 S145 59 169 42 S202 52 224 31 S255 50 281 38 S315 56 339 27 S378 42 420 10" fill="none" stroke="#ff3158" strokeWidth="2.5" vectorEffect="non-scaling-stroke" />
-        </svg>
-      </div>
-    </div>
-    <div className="model-usage">
-      <div className="chart-title"><b>Top models</b><span>EXAMPLE MIX</span></div>
-      {[["GPT-4o", 42], ["Claude 3.5", 31], ["Gemini 2.5", 18]].map(([name, value]) => <div className="usage-row" key={name}>
-        <span>{name}</span><div><i style={{ width: String(value) + "%" }} /></div><b>{value}%</b>
-      </div>)}
-    </div>
-  </section>;
+function Brand() {
+  return <div className="axes-brand">
+    <span className="axes-symbol"><Atom size={22}/><i/></span>
+    <span>AXES<span>AI</span></span>
+  </div>;
 }
 
 export default function Home() {
-  return <main className="api-home">
-    <div className="network-background" aria-hidden="true">
-      <div className="network-grid" /><div className="ambient ambient-left" /><div className="ambient ambient-right" /><div className="ambient ambient-center" />
-    </div>
-    <Header />
-    <section className="network-hero">
-      <div className="network-intro">
-        <span className="hero-badge"><i /> ONE API. EVERY MODEL.</span>
-        <h1>One API. <span>Infinite</span> intelligence.</h1>
-        <p>Route, monitor, and scale across the world&apos;s leading AI models — from one developer-first API.</p>
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [modelOpen, setModelOpen] = useState(false);
+  const [selectedModel, setSelectedModel] = useState(models[0]);
+  const [mode, setMode] = useState("Deep research");
+  const [prompt, setPrompt] = useState("");
+  const [activeNav, setActiveNav] = useState("New research");
+  const [messages, setMessages] = useState<string[]>([]);
+  const [researching, setResearching] = useState(false);
+
+  function startResearch(value = prompt) {
+    const question = value.trim();
+    if (!question || researching) return;
+    setPrompt("");
+    setMessages((old) => [...old, question]);
+    setResearching(true);
+    window.setTimeout(() => setResearching(false), 900);
+  }
+
+  return <main className="axes-app">
+    {sidebarOpen && <aside className="axes-sidebar">
+      <div className="sidebar-top">
+        <Brand />
+        <button className="icon-button sidebar-collapse" aria-label="Collapse sidebar" onClick={() => setSidebarOpen(false)}><PanelLeftClose size={17}/></button>
       </div>
-      <div className="network-stage"><ModelRouting /><RequestFlow /><DashboardPreview /></div>
-      <div className="network-caption">
-        <span><span className="caption-dot" /> DESIGNED FOR RELIABLE ROUTING</span>
-        <span>BUILT FOR DEVELOPERS <b>·</b> POWERED BY API-FLOW</span>
+      <button className="new-research" onClick={() => { setActiveNav("New research"); setMessages([]); }}><Plus size={16}/> <span>New research</span><span className="shortcut">⌘ K</span></button>
+      <div className="sidebar-section-label">WORKSPACE</div>
+      <nav className="sidebar-nav">
+        {navItems.map(({label,icon:Icon}) => <button key={label} className={activeNav === label ? "nav-item active" : "nav-item"} onClick={() => setActiveNav(label)}><Icon size={16}/><span>{label}</span></button>)}
+      </nav>
+      <div className="sidebar-section-label recent-label"><span>RECENT</span><button aria-label="More recent options"><MoreHorizontal size={15}/></button></div>
+      <div className="recent-list">
+        {["Could magnetic fields power satellites?","Exoplanet atmospheres","Quantum gravity: open problems"].map((item,i)=><button key={item} onClick={() => {setActiveNav("Research history");setMessages([item]);}}><History size={14}/><span>{item}</span></button>)}
+      </div>
+      <div className="sidebar-bottom">
+        <button className="sidebar-bottom-item" onClick={() => setActiveNav("Models")}><BrainCircuit size={16}/><span>Models</span><span className="tiny-count">5</span></button>
+        <button className="sidebar-bottom-item" onClick={() => setActiveNav("Settings")}><Settings2 size={16}/><span>Settings</span></button>
+        <div className="profile-row"><div className="profile-avatar">V</div><div><b>Research workspace</b><small>Personal account</small></div><MoreHorizontal size={16}/></div>
+      </div>
+    </aside>}
+    <section className="axes-main">
+      <header className="axes-topbar">
+        <div className="topbar-left">
+          {!sidebarOpen && <button className="icon-button" aria-label="Open sidebar" onClick={() => setSidebarOpen(true)}><Menu size={17}/></button>}
+          <span className="breadcrumb">Workspace</span><span className="crumb-separator">/</span><span className="breadcrumb-current">{activeNav}</span>
+        </div>
+        <div className="topbar-actions"><button className="topbar-help"><Command size={14}/> <span>Shortcuts</span></button><button className="upgrade-button"><Sparkles size={14}/> Upgrade</button><div className="top-avatar">V</div></div>
+      </header>
+
+      <div className="research-scroll">
+        <div className="research-content">
+          {messages.length === 0 ? <>
+            <div className="welcome-eyebrow"><span className="status-dot"/> YOUR RESEARCH WORKSPACE</div>
+            <div className="welcome-title"><h1>Where curiosity<br/><em>takes you.</em></h1><p>Ask a question. Explore the evidence. Find what’s beyond the known.</p></div>
+            <div className="research-composer">
+              <div className="composer-top"><span className="composer-label"><Sparkles size={14}/> Start a research project</span><span className="private-label"><span/> Private workspace</span></div>
+              <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} onKeyDown={(e) => {if(e.key === "Enter" && !e.shiftKey){e.preventDefault();startResearch();}}} placeholder="What would you like to investigate?" rows={3}/>
+              <div className="composer-bottom">
+                <div className="composer-tools"><button title="Attach files"><Paperclip size={16}/></button><button title="Search the web"><Globe2 size={16}/><span>Web</span></button><button title="Research settings"><SlidersHorizontal size={15}/></button></div>
+                <div className="composer-controls">
+                  <button className="mode-select" onClick={() => setMode(mode === "Deep research" ? "Quick answer" : "Deep research")}><Orbit size={14}/>{mode}<ChevronDown size={13}/></button>
+                  <div className="model-wrap"><button className="model-select" onClick={() => setModelOpen(!modelOpen)}><span className={"model-mark "+selectedModel.tone}>{selectedModel.mark}</span><span>{selectedModel.model}</span><ChevronDown size={13}/></button>
+                    {modelOpen && <div className="model-menu">{models.map((m) => <button key={m.model} onClick={() => {setSelectedModel(m);setModelOpen(false);}}><span className={"model-mark "+m.tone}>{m.mark}</span><span><b>{m.model}</b><small>{m.provider}</small></span>{selectedModel.model === m.model && <Check size={14}/>}</button>)}</div>}
+                  </div>
+                  <button className="send-button" disabled={!prompt.trim()} aria-label="Start research" onClick={() => startResearch()}><ArrowUp size={17}/></button>
+                </div>
+              </div>
+              <div className="composer-footnote">AXES AI can make mistakes. Verify important findings with original sources.</div>
+            </div>
+            <div className="suggestion-heading"><span>MAKE A DISCOVERY</span><span>Choose a starting point</span></div>
+            <div className="suggestion-grid">{suggestions.map(({icon:Icon,title,prompt:sample})=><button key={title} className="suggestion-card" onClick={() => setPrompt(sample)}><span className="suggestion-icon"><Icon size={17}/></span><span><b>{title}</b><small>{sample}</small></span><ArrowUp size={14} className="suggestion-arrow"/></button>)}</div>
+            <div className="workspace-footer"><span><span className="footer-dot"/> Research tools ready</span><span>Powered by AXES AI <b>·</b> API gateway</span></div>
+          </> : <div className="research-session">
+            <div className="session-title"><span className="session-icon"><Microscope size={17}/></span><div><small>RESEARCH PROJECT</small><h1>{messages[messages.length-1]}</h1></div></div>
+            <div className="session-status"><span className="status-dot"/> {researching ? "Preparing your research..." : "Research prompt created"} <span>·</span> {selectedModel.model}</div>
+            <div className="session-placeholder"><div className="placeholder-icon"><Atom size={24}/></div><h2>{researching ? "Setting up your research" : "Your research starts here"}</h2><p>The research interface is ready. Connect the AXES AI gateway and research sources to generate answers with citations.</p><button onClick={() => {setMessages([]);setActiveNav("New research");}}>Start a new project <Plus size={14}/></button></div>
+            <div className="session-composer"><textarea value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder="Continue exploring this topic..." rows={2}/><button disabled={!prompt.trim()} onClick={()=>startResearch()}><ArrowUp size={16}/></button></div>
+          </div>}
+        </div>
       </div>
     </section>
   </main>;
