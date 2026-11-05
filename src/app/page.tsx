@@ -5,7 +5,7 @@ import {
   Atom, ArrowUp, ChevronDown, Plus, Search, BookOpen, FileText,
   Settings2, Sparkles, Globe2, Paperclip, BrainCircuit, Microscope, FlaskConical,
   PanelLeftClose, Command, Telescope, Orbit, Library, SlidersHorizontal,
-  MoreHorizontal, Check, Menu
+  MoreHorizontal, Check, Menu, Eye, EyeOff, KeyRound, ShieldCheck, Trash2
 } from "lucide-react";
 
 const models = [
@@ -46,6 +46,22 @@ export default function Home() {
   const [activeNav, setActiveNav] = useState("New research");
   const [messages, setMessages] = useState<string[]>([]);
   const [researching, setResearching] = useState(false);
+  const [apiProvider, setApiProvider] = useState("OpenAI");
+  const [apiKey, setApiKey] = useState("");
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [apiKeySaved, setApiKeySaved] = useState(false);
+
+  function saveApiKey() {
+    if (!apiKey.trim()) return;
+    window.sessionStorage.setItem(`axes:${apiProvider.toLowerCase()}:api-key`, apiKey.trim());
+    setApiKeySaved(true);
+  }
+
+  function removeApiKey() {
+    window.sessionStorage.removeItem(`axes:${apiProvider.toLowerCase()}:api-key`);
+    setApiKey("");
+    setApiKeySaved(false);
+  }
 
   function startResearch(value = prompt) {
     const question = value.trim();
@@ -84,7 +100,15 @@ export default function Home() {
 
       <div className="research-scroll">
         <div className="research-content">
-          {messages.length === 0 ? <>
+          {activeNav === "Settings" ? <div className="settings-page">
+            <div className="settings-heading"><span className="settings-kicker">WORKSPACE PREFERENCES</span><h1>Settings</h1><p>Connect an AI provider to prepare your research workspace.</p></div>
+            <section className="settings-card"><div className="settings-card-title"><span className="settings-card-icon"><KeyRound size={17}/></span><div><h2>AI provider API key</h2><p>Choose a provider and add your key.</p></div></div>
+              <label className="settings-label">Provider</label><select className="settings-select" value={apiProvider} onChange={(e)=>{setApiProvider(e.target.value);setApiKey("");setApiKeySaved(false);}}><option>OpenAI</option><option>Anthropic</option><option>Google Gemini</option><option>DeepSeek</option><option>Groq</option></select>
+              <label className="settings-label" htmlFor="provider-key">API key</label><div className="api-key-field"><input id="provider-key" type={showApiKey ? "text" : "password"} value={apiKey} onChange={(e)=>{setApiKey(e.target.value);setApiKeySaved(false);}} placeholder={`Paste your ${apiProvider} API key`} autoComplete="off"/><button type="button" aria-label={showApiKey ? "Hide API key" : "Show API key"} onClick={()=>setShowApiKey(!showApiKey)}>{showApiKey ? <EyeOff size={16}/> : <Eye size={16}/>}</button></div>
+              <div className="settings-security"><ShieldCheck size={15}/><span>This demo stores the key only in this browser tab session. It is not yet connected to the server or used for AI requests.</span></div>
+              <div className="settings-actions"><button className="settings-save" disabled={!apiKey.trim()} onClick={saveApiKey}>{apiKeySaved ? <><Check size={15}/> Saved for this session</> : "Save key"}</button><button className="settings-remove" onClick={removeApiKey}><Trash2 size={14}/> Remove</button></div>
+            </section><div className="settings-note">For production, keys should be sent to a protected server-side endpoint and never exposed in client code or committed to GitHub.</div>
+          </div> : messages.length === 0 ? <>
             <div className="welcome-eyebrow"><span className="status-dot"/> YOUR SPACE FOR RESEARCH</div>
             <div className="welcome-title"><h1>Turn questions into<br/><em>understanding.</em></h1><p>Investigate the unknown. Examine the evidence. Build a clearer picture.</p></div>
             <div className="research-composer">
