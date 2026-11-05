@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "API-FLOW — One API. The right model.",
-  description: "A provider-agnostic AI gateway with intelligent routing, resilient failover, and one OpenAI-compatible endpoint.",
+  title: "AXES AI — Research beyond answers",
+  description: "Explore scientific questions, analyze research, and discover new ideas with AXES AI.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
