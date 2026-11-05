@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     if (!config) return NextResponse.json({ error: "Unsupported AI provider." }, { status: 400 });
     if (!apiKey) return NextResponse.json({ error: "Enter an API key for this provider." }, { status: 400 });
 
-    let url = config.format === "gemini" ? `${config.base}/models?key=${encodeURIComponent(apiKey)}` : `${config.base}/models`;
+    const url = config.format === "gemini" ? `${config.base}/models?key=${encodeURIComponent(apiKey)}` : `${config.base}/models`;
     const headers: Record<string, string> = config.format === "anthropic"
       ? { "x-api-key": apiKey, "anthropic-version": "2023-06-01" }
       : config.format === "gemini" ? {} : { Authorization: `Bearer ${apiKey}` };
@@ -31,10 +31,14 @@ export async function POST(request: Request) {
       const message = data?.error?.message || data?.error?.status || data?.message || `${config.name} rejected the key (HTTP ${response.status}).`;
       return NextResponse.json({ error: String(message) }, { status: response.status === 401 || response.status === 403 ? response.status : 502 });
     }
-    let models: string[] = [];
-    if (config.format === "gemini") models = Array.isArray(data.models) ? data.models.filter((m: any) => typeof m.name === "string" && m.supportedGenerationMethods?.includes("generateContent")).map((m: any) => m.name.replace(/^models\//, "")) : [];
-    else if (config.format === "anthropic") models = Array.isArray(data.data) ? data.data.map((m: any) => m.id).filter((id: unknown): id is string => typeof id === "string") : [];
-    else models = Array.isArray(data.data) ? data.data.map((m: any) => m.id).filter((id: unknown): id is string => typeof id === "string") : [];
+    type ModelRecord = { id?: unknown; name?: unknown; supportedGenerationMethods?: unknown };
+    const models: string[] = config.format === "gemini"
+      ? Array.isArray(data.models)
+        ? data.models.filter((model: ModelRecord) => typeof model.name === "string" && Array.isArray(model.supportedGenerationMethods) && model.supportedGenerationMethods.includes("generateContent")).map((model: ModelRecord) => (model.name as string).replace(/^models\//, ""))
+        : []
+      : Array.isArray(data.data)
+        ? data.data.map((model: ModelRecord) => model.id).filter((id: unknown): id is string => typeof id === "string")
+        : [];
     if (!models.length) return NextResponse.json({ error: `${config.name} returned no models. Check key permissions or account access.` }, { status: 502 });
     return NextResponse.json({ models });
   } catch {
