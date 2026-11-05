@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Atom, ArrowUp, ChevronDown, Plus, Search, BookOpen, FileText,
   Settings2, Sparkles, Globe2, Paperclip, BrainCircuit, Microscope, FlaskConical,
@@ -8,7 +8,7 @@ import {
   MoreHorizontal, Check, Menu, Eye, EyeOff, KeyRound, ShieldCheck, Trash2
 } from "lucide-react";
 
-const defaultModels = [
+type ResearchProject = { id: string; title: string; questions: string[]; answer: string; model: string; updatedAt: number };\n\nconst defaultModels = [
   { provider: "MeshAPI", model: "mistral/mistral-7b-instruct-v0", mark: "✳", tone: "mesh" },
 ];
 
@@ -47,7 +47,7 @@ export default function Home() {
   const [showApiKey, setShowApiKey] = useState(false);
   const [apiKeySaved, setApiKeySaved] = useState(false);
   const [researchAnswer, setResearchAnswer] = useState("");
-  const [researchError, setResearchError] = useState("");
+  const [researchError, setResearchError] = useState("");\n  const [projects, setProjects] = useState<ResearchProject[]>([]);\n  const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);\n  const [projectsReady, setProjectsReady] = useState(false);\n\n  useEffect(() => {\n    try { const saved = window.localStorage.getItem("axes:research-projects"); if (saved) setProjects(JSON.parse(saved)); } catch { /* Ignore invalid local project data. */ }\n    setProjectsReady(true);\n  }, []);\n\n  useEffect(() => {\n    if (projectsReady) window.localStorage.setItem("axes:research-projects", JSON.stringify(projects));\n  }, [projects, projectsReady]);
 
   function saveApiKey() {
     if (!apiKey.trim()) return;
@@ -84,7 +84,7 @@ export default function Home() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Research request failed.");
-      setResearchAnswer(data.answer);
+      setResearchAnswer(data.answer);\n      setProjects((old) => old.map((project) => project.id === projectId ? { ...project, answer: data.answer, model: selectedModel.model, updatedAt: Date.now() } : project));
     } catch (error) {
       setResearchError(error instanceof Error ? error.message : "Research request failed.");
     } finally {
@@ -98,7 +98,7 @@ export default function Home() {
         <Brand />
         <button className="icon-button sidebar-collapse" aria-label="Collapse sidebar" onClick={() => setSidebarOpen(false)}><PanelLeftClose size={17}/></button>
       </div>
-      <button className="new-research" onClick={() => { setActiveNav("New research"); setMessages([]); }}><Plus size={16}/> <span>New research</span><span className="shortcut">⌘ K</span></button>
+      <button className="new-research" onClick={() => { setActiveNav("New research"); setMessages([]); setResearchAnswer(""); setResearchError(""); setCurrentProjectId(null); }}><Plus size={16}/> <span>New research</span><span className="shortcut">⌘ K</span></button>\n      {projects.length > 0 && <><div className="sidebar-section-label">RECENT PROJECTS</div><nav className="sidebar-nav">{projects.slice(0, 8).map((project) => <button key={project.id} className={currentProjectId === project.id ? "nav-item active" : "nav-item"} onClick={() => { setCurrentProjectId(project.id); setMessages(project.questions); setResearchAnswer(project.answer); setResearchError(""); setActiveNav("Research project"); }}><FileText size={15}/><span>{project.title}</span></button>)}</nav></>}
       <div className="sidebar-section-label">WORKSPACE</div>
       <nav className="sidebar-nav">
         {navItems.map(({label,icon:Icon}) => <button key={label} className={activeNav === label ? "nav-item active" : "nav-item"} onClick={() => setActiveNav(label)}><Icon size={16}/><span>{label}</span></button>)}
@@ -144,7 +144,7 @@ export default function Home() {
                   <button className="send-button" disabled={!prompt.trim()} aria-label="Start research" onClick={() => startResearch()}><ArrowUp size={17}/></button>
                 </div>
               </div>
-              <div className="composer-footnote">AI-generated responses may be inaccurate. Check important claims against primary sources.</div>
+              <div className="composer-footnote">AI-generated responses may be inaccurate. Check important claims against primary sources. Research projects are saved in this browser.</div>
             </div>
             <div className="suggestion-heading"><span>START WITH A QUESTION</span><span>Suggested research directions</span></div>
             <div className="suggestion-grid">{suggestions.map(({icon:Icon,title,prompt:sample})=><button key={title} className="suggestion-card" onClick={() => setPrompt(sample)}><span className="suggestion-icon"><Icon size={17}/></span><span><b>{title}</b><small>{sample}</small></span><ArrowUp size={14} className="suggestion-arrow"/></button>)}</div>
@@ -152,7 +152,7 @@ export default function Home() {
           </> : <div className="research-session">
             <div className="session-title"><span className="session-icon"><Microscope size={17}/></span><div><small>RESEARCH QUESTION</small><h1>{messages[messages.length-1]}</h1></div></div>
             <div className="session-status"><span className="status-dot"/> {researching ? "Preparing your workspace..." : "Project created"} <span>·</span> {selectedModel.model}</div>
-            <div className="session-placeholder"><div className="placeholder-icon"><Atom size={24}/></div><h2>{researching ? "Researching your question…" : researchError ? "Research could not complete" : researchAnswer ? "Research response" : "A question is the beginning"}</h2>{researching ? <p>Sending your question to {selectedModel.provider}. Please wait…</p> : researchError ? <p className="research-error">{researchError}</p> : researchAnswer ? <div className="research-answer">{researchAnswer}</div> : <p>Enter a question to begin. Add your MeshAPI key in Settings first.</p>}<button onClick={() => {setMessages([]);setResearchAnswer("");setResearchError("");setActiveNav("New research");}}>New research project <Plus size={14}/></button></div>
+            <div className="session-placeholder"><div className="placeholder-icon"><Atom size={24}/></div><h2>{researching ? "Researching your question…" : researchError ? "Research could not complete" : researchAnswer ? "Research response" : "A question is the beginning"}</h2>{researching ? <p>Sending your question to {selectedModel.provider}. Please wait…</p> : researchError ? <p className="research-error">{researchError}</p> : researchAnswer ? <div className="research-answer">{researchAnswer}</div> : <p>Enter a question to begin. Add your MeshAPI key in Settings first.</p>}<button onClick={() => {setMessages([]);setResearchAnswer("");setResearchError("");setCurrentProjectId(null);setActiveNav("New research");}}>New research project <Plus size={14}/></button></div>
             <div className="session-composer"><textarea value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder="Add a follow-up question..." rows={2}/><button disabled={!prompt.trim()} onClick={()=>startResearch()}><ArrowUp size={16}/></button></div>
           </div>}
         </div>
