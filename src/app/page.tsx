@@ -22,6 +22,14 @@ const providers = [
 ] as const;
 const defaultModels: ModelOption[] = [{ provider: "OpenAI", providerId: "openai", model: "gpt-4o-mini", mark: "◉", tone: "openai" }];
 
+function chooseResearchModel(options: ModelOption[]): ModelOption {
+  const unsuitable = /audio|speech|tts|whisper|embedding|embed-|rerank|moderation|image|video|transcri|orpheus/i;
+  const preferred = /chat|instruct|gpt|gemini|claude|llama|qwen|deepseek|mistral|command-r/i;
+  return options.find((option) => !unsuitable.test(option.model) && preferred.test(option.model))
+    || options.find((option) => !unsuitable.test(option.model))
+    || options[0];
+}
+
 const navItems = [
   { label: "Start a research project", icon: Plus },
   { label: "Discover", icon: Search },
@@ -86,20 +94,20 @@ export default function Home() {
     })
       .then(async (response) => {
         const data = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(data.error || "Could not load saved MeshAPI models.");
+        if (!response.ok) throw new Error(data.error || "Could not load saved provider models.");
         const available = Array.isArray(data.models)
           ? data.models.filter((model: unknown): model is string => typeof model === "string" && model.trim().length > 0)
           : [];
-        if (!available.length) throw new Error("MeshAPI returned no models for this key.");
+        if (!available.length) throw new Error("This provider returned no compatible research models.");
         if (cancelled) return;
         const providerMeta = providers.find((p) => p.id === apiProvider) || providers[0];
         const nextModels = available.map((model: string) => ({ provider: providerMeta.name, providerId: apiProvider, model, mark: providerMeta.mark, tone: providerMeta.tone }));
         setModels(nextModels);
-        setSelectedModel(nextModels[0]);
+        setSelectedModel(chooseResearchModel(nextModels));
         setApiKeySaved(true);
       })
       .catch((error) => {
-        if (!cancelled) setModelsError(error instanceof Error ? error.message : "Could not load saved MeshAPI models.");
+        if (!cancelled) setModelsError(error instanceof Error ? error.message : "Could not load saved provider models.");
       })
       .finally(() => {
         if (!cancelled) setModelsLoading(false);
@@ -129,12 +137,12 @@ export default function Home() {
       const nextModels = available.map((model: string) => ({ provider: providerMeta.name, providerId: apiProvider, model, mark: providerMeta.mark, tone: providerMeta.tone }));
       window.sessionStorage.setItem(`axes:provider:${apiProvider}:api-key`, key);
       setModels(nextModels);
-      setSelectedModel(nextModels[0]);
+      setSelectedModel(chooseResearchModel(nextModels));
       setApiKeySaved(true);
       setActiveNav("New research");
       setResearchError("");
     } catch (error) {
-      setModelsError(error instanceof Error ? error.message : "Could not connect to MeshAPI.");
+      setModelsError(error instanceof Error ? error.message : "Could not connect to this provider.");
     } finally {
       setModelsLoading(false);
     }
@@ -235,7 +243,7 @@ export default function Home() {
             <section className="settings-card"><div className="settings-card-title"><span className="settings-card-icon"><KeyRound size={17}/></span><div><h2>AI provider API key</h2><p>Connect a provider with its own API key and model catalog.</p></div></div>
               <label className="settings-label">Provider</label><select className="settings-select" value={apiProvider} onChange={(e)=>{setApiProvider(e.target.value);setApiKey("");setApiKeySaved(false);setModelsError("");setApiKeySaved(false);}}>{providers.map((p)=><option key={p.id} value={p.id}>{p.name}</option>)}</select>
               <label className="settings-label" htmlFor="provider-key">API key</label><div className="api-key-field"><input id="provider-key" type={showApiKey ? "text" : "password"} value={apiKey} onChange={(e)=>{setApiKey(e.target.value);setApiKeySaved(false);}} placeholder={`Paste your ${providers.find((p)=>p.id===apiProvider)?.name || apiProvider} API key`} autoComplete="off"/><button type="button" aria-label={showApiKey ? "Hide API key" : "Show API key"} onClick={()=>setShowApiKey(!showApiKey)}>{showApiKey ? <EyeOff size={16}/> : <Eye size={16}/>}</button></div>
-              <div className="settings-security"><ShieldCheck size={15}/><span>Your {providers.find((p)=>p.id===apiProvider)?.name || apiProvider} key stays in this browser tab session. AXES uses it to discover models and send requests. Never share it.</span></div>{modelsLoading && <p>Loading available models from MeshAPI…</p>}{modelsError && <p className="research-error">{modelsError}</p>}{apiKeySaved && !modelsLoading && !modelsError && <p>{models.length} models loaded. The first model is selected automatically.</p>}
+              <div className="settings-security"><ShieldCheck size={15}/><span>Your {providers.find((p)=>p.id===apiProvider)?.name || apiProvider} key stays in this browser tab session. AXES uses it to discover models and send requests. Never share it.</span></div>{modelsLoading && <p>Loading available models…</p>}{modelsError && <p className="research-error">{modelsError}</p>}{apiKeySaved && !modelsLoading && !modelsError && <p>{models.length} models loaded. The first model is selected automatically.</p>}
               <div className="settings-actions"><button className="settings-save" disabled={!apiKey.trim() || modelsLoading} onClick={saveApiKey}>{modelsLoading ? "Loading models…" : apiKeySaved ? <><Check size={15}/> Key saved · models loaded</> : "Save key"}</button><button className="settings-remove" onClick={removeApiKey}><Trash2 size={14}/> Remove</button></div>
             </section><div className="settings-note">Keys are session-only and are not saved to your AXES account or committed to GitHub.</div>
           </div> : messages.length === 0 ? <>
@@ -262,7 +270,7 @@ export default function Home() {
           </> : <div className="research-session">
             <div className="session-title"><span className="session-icon"><Microscope size={17}/></span><div><small>RESEARCH QUESTION</small><h1>{messages[messages.length-1]}</h1></div></div>
             <div className="session-status"><span className="status-dot"/> {researching ? "Preparing your workspace..." : "Project created"} <span>·</span> {selectedModel.model}</div>
-            <div className="session-placeholder"><div className="placeholder-icon"><Atom size={24}/></div><h2>{researching ? "Researching your question…" : researchError ? "Research could not complete" : researchAnswer ? "Research response" : "A question is the beginning"}</h2>{researching ? <p>Sending your question to {selectedModel.provider}. Please wait…</p> : researchError ? <p className="research-error">{researchError}</p> : researchAnswer ? <div className="research-answer">{researchAnswer}</div> : <p>Enter a question to begin. Add your MeshAPI key in Settings first.</p>}<button onClick={() => {setMessages([]);setResearchAnswer("");setResearchError("");setCurrentProjectId(null);setActiveNav("New research");}}>New research project <Plus size={14}/></button></div>
+            <div className="session-placeholder"><div className="placeholder-icon"><Atom size={24}/></div><h2>{researching ? "Researching your question…" : researchError ? "Research could not complete" : researchAnswer ? "Research response" : "A question is the beginning"}</h2>{researching ? <p>Sending your question to {selectedModel.provider}. Please wait…</p> : researchError ? <p className="research-error">{researchError}</p> : researchAnswer ? <div className="research-answer">{researchAnswer}</div> : <p>Enter a question to begin. Add the selected provider's API key in Settings first.</p>}<button onClick={() => {setMessages([]);setResearchAnswer("");setResearchError("");setCurrentProjectId(null);setActiveNav("New research");}}>New research project <Plus size={14}/></button></div>
             <div className="session-composer"><textarea value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder="Add a follow-up question..." rows={2}/><button disabled={!prompt.trim()} onClick={()=>startResearch()}><ArrowUp size={16}/></button></div>
           </div>}
         </div>
