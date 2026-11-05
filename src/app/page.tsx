@@ -8,7 +8,7 @@ import {
   MoreHorizontal, Check, Menu, Eye, EyeOff, KeyRound, ShieldCheck, Trash2
 } from "lucide-react";
 
-const models = [
+const defaultModels = [
   { provider: "MeshAPI", model: "mistral/mistral-7b-instruct-v0", mark: "✳", tone: "mesh" },
 ];
 
@@ -36,7 +36,7 @@ function Brand() {
 export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [modelOpen, setModelOpen] = useState(false);
-  const [selectedModel, setSelectedModel] = useState(models[0]);
+  const [models, setModels] = useState(defaultModels);\n  const [selectedModel, setSelectedModel] = useState(defaultModels[0]);\n  const [modelsLoading, setModelsLoading] = useState(false);\n  const [modelsError, setModelsError] = useState("");
   const [mode, setMode] = useState("Deep research");
   const [prompt, setPrompt] = useState("");
   const [activeNav, setActiveNav] = useState("New research");
@@ -104,7 +104,7 @@ export default function Home() {
         {navItems.map(({label,icon:Icon}) => <button key={label} className={activeNav === label ? "nav-item active" : "nav-item"} onClick={() => setActiveNav(label)}><Icon size={16}/><span>{label}</span></button>)}
       </nav>
       <div className="sidebar-bottom">
-        <button className="sidebar-bottom-item" onClick={() => setActiveNav("Models")}><BrainCircuit size={16}/><span>Models</span><span className="tiny-count">5</span></button>
+        <button className="sidebar-bottom-item" onClick={() => setActiveNav("Models")}><BrainCircuit size={16}/><span>Models</span><span className="tiny-count">{models.length}</span></button>
         <button className="sidebar-bottom-item" onClick={() => setActiveNav("Settings")}><Settings2 size={16}/><span>Settings</span></button>
         <div className="profile-row"><div className="profile-avatar">V</div><div><b>Research workspace</b><small>Personal account</small></div><MoreHorizontal size={16}/></div>
       </div>
@@ -125,8 +125,8 @@ export default function Home() {
             <section className="settings-card"><div className="settings-card-title"><span className="settings-card-icon"><KeyRound size={17}/></span><div><h2>AI provider API key</h2><p>Add your MeshAPI key to connect the workspace.</p></div></div>
               <label className="settings-label">Provider</label><select className="settings-select" value={apiProvider} onChange={(e)=>{setApiProvider(e.target.value);setApiKey("");setApiKeySaved(false);}}><option>MeshAPI</option></select>
               <label className="settings-label" htmlFor="provider-key">API key</label><div className="api-key-field"><input id="provider-key" type={showApiKey ? "text" : "password"} value={apiKey} onChange={(e)=>{setApiKey(e.target.value);setApiKeySaved(false);}} placeholder={`Paste your ${apiProvider} API key`} autoComplete="off"/><button type="button" aria-label={showApiKey ? "Hide API key" : "Show API key"} onClick={()=>setShowApiKey(!showApiKey)}>{showApiKey ? <EyeOff size={16}/> : <Eye size={16}/>}</button></div>
-              <div className="settings-security"><ShieldCheck size={15}/><span>Your MeshAPI key stays in this browser tab session and is sent securely to the AXES research endpoint. Never share your key.</span></div>
-              <div className="settings-actions"><button className="settings-save" disabled={!apiKey.trim()} onClick={saveApiKey}>{apiKeySaved ? <><Check size={15}/> Saved for this session</> : "Save key"}</button><button className="settings-remove" onClick={removeApiKey}><Trash2 size={14}/> Remove</button></div>
+              <div className="settings-security"><ShieldCheck size={15}/><span>Your MeshAPI key stays in this browser tab session. AXES uses it to discover models and send research requests. Never share your key.</span></div>{modelsLoading && <p>Loading available models from MeshAPI…</p>}{modelsError && <p className="research-error">{modelsError}</p>}{apiKeySaved && !modelsLoading && !modelsError && <p>{models.length} models loaded. The first model is selected automatically.</p>}
+              <div className="settings-actions"><button className="settings-save" disabled={!apiKey.trim() || modelsLoading} onClick={saveApiKey}>{modelsLoading ? "Loading models…" : apiKeySaved ? <><Check size={15}/> Key saved · models loaded</> : "Save key"}</button><button className="settings-remove" onClick={removeApiKey}><Trash2 size={14}/> Remove</button></div>
             </section><div className="settings-note">Keys are session-only and are not saved to your AXES account or committed to GitHub.</div>
           </div> : messages.length === 0 ? <>
             <div className="welcome-eyebrow"><span className="status-dot"/> YOUR SPACE FOR RESEARCH</div>
