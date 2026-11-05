@@ -88,11 +88,31 @@ export default function Home() {
       setResearchError("Add and save this provider's API key in Settings to start researching.");
       return;
     }
+
+    const projectId = currentProjectId ?? crypto.randomUUID();
+    const existingProject = projects.find((item) => item.id === projectId);
+    const now = Date.now();
+    const newProject: ResearchProject = {
+      id: projectId,
+      title: question.length > 72 ? question.slice(0, 69) + "…" : question,
+      questions: [question],
+      answer: "",
+      model: selectedModel.model,
+      updatedAt: now,
+    };
+
+    setCurrentProjectId(projectId);
+    setProjects((old) => existingProject
+      ? old.map((item) => item.id === projectId
+          ? { ...item, questions: [...item.questions, question], updatedAt: now }
+          : item)
+      : [newProject, ...old]);
     setPrompt("");
     setResearchAnswer("");
     setResearchError("");
     setMessages((old) => [...old, question]);
     setResearching(true);
+
     try {
       const response = await fetch("/api/research", {
         method: "POST",
@@ -102,7 +122,9 @@ export default function Home() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Research request failed.");
       setResearchAnswer(data.answer);
-      setProjects((old) => old.map((project) => project.id === projectId ? { ...project, answer: data.answer, model: selectedModel.model, updatedAt: Date.now() } : project));
+      setProjects((old) => old.map((item) => item.id === projectId
+        ? { ...item, answer: data.answer, model: selectedModel.model, updatedAt: Date.now() }
+        : item));
     } catch (error) {
       setResearchError(error instanceof Error ? error.message : "Research request failed.");
     } finally {
