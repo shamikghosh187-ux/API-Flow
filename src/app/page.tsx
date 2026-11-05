@@ -8,7 +8,9 @@ import {
   MoreHorizontal, Check, Menu, Eye, EyeOff, KeyRound, ShieldCheck, Trash2
 } from "lucide-react";
 
-type ResearchProject = { id: string; title: string; questions: string[]; answer: string; model: string; updatedAt: number };\n\nconst defaultModels = [
+type ResearchProject = { id: string; title: string; questions: string[]; answer: string; model: string; updatedAt: number };
+
+const defaultModels = [
   { provider: "MeshAPI", model: "mistral/mistral-7b-instruct-v0", mark: "✳", tone: "mesh" },
 ];
 
@@ -36,7 +38,10 @@ function Brand() {
 export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [modelOpen, setModelOpen] = useState(false);
-  const [models, setModels] = useState(defaultModels);\n  const [selectedModel, setSelectedModel] = useState(defaultModels[0]);\n  const [modelsLoading, setModelsLoading] = useState(false);\n  const [modelsError, setModelsError] = useState("");
+  const [models, setModels] = useState(defaultModels);
+  const [selectedModel, setSelectedModel] = useState(defaultModels[0]);
+  const [modelsLoading, setModelsLoading] = useState(false);
+  const [modelsError, setModelsError] = useState("");
   const [mode, setMode] = useState("Deep research");
   const [prompt, setPrompt] = useState("");
   const [activeNav, setActiveNav] = useState("New research");
@@ -47,7 +52,19 @@ export default function Home() {
   const [showApiKey, setShowApiKey] = useState(false);
   const [apiKeySaved, setApiKeySaved] = useState(false);
   const [researchAnswer, setResearchAnswer] = useState("");
-  const [researchError, setResearchError] = useState("");\n  const [projects, setProjects] = useState<ResearchProject[]>([]);\n  const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);\n  const [projectsReady, setProjectsReady] = useState(false);\n\n  useEffect(() => {\n    try { const saved = window.localStorage.getItem("axes:research-projects"); if (saved) setProjects(JSON.parse(saved)); } catch { /* Ignore invalid local project data. */ }\n    setProjectsReady(true);\n  }, []);\n\n  useEffect(() => {\n    if (projectsReady) window.localStorage.setItem("axes:research-projects", JSON.stringify(projects));\n  }, [projects, projectsReady]);
+  const [researchError, setResearchError] = useState("");
+  const [projects, setProjects] = useState<ResearchProject[]>([]);
+  const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
+  const [projectsReady, setProjectsReady] = useState(false);
+
+  useEffect(() => {
+    try { const saved = window.localStorage.getItem("axes:research-projects"); if (saved) setProjects(JSON.parse(saved)); } catch { /* Ignore invalid local project data. */ }
+    setProjectsReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (projectsReady) window.localStorage.setItem("axes:research-projects", JSON.stringify(projects));
+  }, [projects, projectsReady]);
 
   function saveApiKey() {
     if (!apiKey.trim()) return;
@@ -84,7 +101,8 @@ export default function Home() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Research request failed.");
-      setResearchAnswer(data.answer);\n      setProjects((old) => old.map((project) => project.id === projectId ? { ...project, answer: data.answer, model: selectedModel.model, updatedAt: Date.now() } : project));
+      setResearchAnswer(data.answer);
+      setProjects((old) => old.map((project) => project.id === projectId ? { ...project, answer: data.answer, model: selectedModel.model, updatedAt: Date.now() } : project));
     } catch (error) {
       setResearchError(error instanceof Error ? error.message : "Research request failed.");
     } finally {
@@ -98,7 +116,8 @@ export default function Home() {
         <Brand />
         <button className="icon-button sidebar-collapse" aria-label="Collapse sidebar" onClick={() => setSidebarOpen(false)}><PanelLeftClose size={17}/></button>
       </div>
-      <button className="new-research" onClick={() => { setActiveNav("New research"); setMessages([]); setResearchAnswer(""); setResearchError(""); setCurrentProjectId(null); }}><Plus size={16}/> <span>New research</span><span className="shortcut">⌘ K</span></button>\n      {projects.length > 0 && <><div className="sidebar-section-label">RECENT PROJECTS</div><nav className="sidebar-nav">{projects.slice(0, 8).map((project) => <button key={project.id} className={currentProjectId === project.id ? "nav-item active" : "nav-item"} onClick={() => { setCurrentProjectId(project.id); setMessages(project.questions); setResearchAnswer(project.answer); setResearchError(""); setActiveNav("Research project"); }}><FileText size={15}/><span>{project.title}</span></button>)}</nav></>}
+      <button className="new-research" onClick={() => { setActiveNav("New research"); setMessages([]); setResearchAnswer(""); setResearchError(""); setCurrentProjectId(null); }}><Plus size={16}/> <span>New research</span><span className="shortcut">⌘ K</span></button>
+      {projects.length > 0 && <><div className="sidebar-section-label">RECENT PROJECTS</div><nav className="sidebar-nav">{projects.slice(0, 8).map((project) => <button key={project.id} className={currentProjectId === project.id ? "nav-item active" : "nav-item"} onClick={() => { setCurrentProjectId(project.id); setMessages(project.questions); setResearchAnswer(project.answer); setResearchError(""); setActiveNav("Research project"); }}><FileText size={15}/><span>{project.title}</span></button>)}</nav></>}
       <div className="sidebar-section-label">WORKSPACE</div>
       <nav className="sidebar-nav">
         {navItems.map(({label,icon:Icon}) => <button key={label} className={activeNav === label ? "nav-item active" : "nav-item"} onClick={() => setActiveNav(label)}><Icon size={16}/><span>{label}</span></button>)}
