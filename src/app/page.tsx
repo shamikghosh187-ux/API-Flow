@@ -108,7 +108,7 @@ export default function Home() {
           </> : <div className="research-session">
             <div className="session-title"><span className="session-icon"><Microscope size={17}/></span><div><small>RESEARCH QUESTION</small><h1>{messages[messages.length-1]}</h1></div></div>
             <div className="session-status"><span className="status-dot"/> {researching ? "Preparing your workspace..." : "Project created"} <span>·</span> {selectedModel.model}</div>
-            <div className="session-placeholder"><div className="placeholder-icon"><Atom size={24}/></div><h2>{researching ? "Setting up your research" : "A question is the beginning"}</h2><p>This project is ready for the research workflow. AXES AI's research engine, source retrieval, and citation generation still need to be connected before it can produce findings.</p><button onClick={() => {setMessages([]);setActiveNav("New research");}}>New research project <Plus size={14}/></button></div>
+            <div className="session-placeholder"><div className="placeholder-icon"><Atom size={24}/></div><h2>{researching ? "Setting up your research" : "A question is the beginning"}</h2><p>This project is ready for the research workflow. AXES AI&apos;s research engine, source retrieval, and citation generation still need to be connected before it can produce findings.</p><button onClick={() => {setMessages([]);setActiveNav("New research");}}>New research project <Plus size={14}/></button></div>
             <div className="session-composer"><textarea value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder="Add a follow-up question..." rows={2}/><button disabled={!prompt.trim()} onClick={()=>startResearch()}><ArrowUp size={16}/></button></div>
           </div>}
         </div>
