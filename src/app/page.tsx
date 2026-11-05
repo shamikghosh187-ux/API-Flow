@@ -4,7 +4,7 @@ import { useState } from "react";
 import {
   Atom, ArrowUp, ChevronDown, Plus, Search, BookOpen, FileText,
   Settings2, Sparkles, Globe2, Paperclip, BrainCircuit, Microscope, FlaskConical,
-  History, PanelLeftClose, Command, Telescope, Orbit, Library, SlidersHorizontal,
+  PanelLeftClose, Command, Telescope, Orbit, Library, SlidersHorizontal,
   MoreHorizontal, Check, Menu
 } from "lucide-react";
 
@@ -67,10 +67,6 @@ export default function Home() {
       <nav className="sidebar-nav">
         {navItems.map(({label,icon:Icon}) => <button key={label} className={activeNav === label ? "nav-item active" : "nav-item"} onClick={() => setActiveNav(label)}><Icon size={16}/><span>{label}</span></button>)}
       </nav>
-      <div className="sidebar-section-label recent-label"><span>RECENT</span><button aria-label="More recent options"><MoreHorizontal size={15}/></button></div>
-      <div className="recent-list">
-        {["Could magnetic fields power satellites?","Exoplanet atmospheres","Quantum gravity: open problems"].map((item,i)=><button key={item} onClick={() => {setActiveNav("Research history");setMessages([item]);}}><History size={14}/><span>{item}</span></button>)}
-      </div>
       <div className="sidebar-bottom">
         <button className="sidebar-bottom-item" onClick={() => setActiveNav("Models")}><BrainCircuit size={16}/><span>Models</span><span className="tiny-count">5</span></button>
         <button className="sidebar-bottom-item" onClick={() => setActiveNav("Settings")}><Settings2 size={16}/><span>Settings</span></button>
