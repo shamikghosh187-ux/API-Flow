@@ -33,7 +33,7 @@ const suggestions = [
 function Brand() {
   return <div className="axes-brand">
     <span className="axes-symbol"><Atom size={22}/><i/></span>
-    <span>AXES<span>AI</span></span>
+    <span>axes<span className="brand-ai">.ai</span></span>
   </div>;
 }
 
@@ -89,11 +89,11 @@ export default function Home() {
       <div className="research-scroll">
         <div className="research-content">
           {messages.length === 0 ? <>
-            <div className="welcome-eyebrow"><span className="status-dot"/> YOUR RESEARCH WORKSPACE</div>
-            <div className="welcome-title"><h1>Where curiosity<br/><em>takes you.</em></h1><p>Ask a question. Explore the evidence. Find what’s beyond the known.</p></div>
+            <div className="welcome-eyebrow"><span className="status-dot"/> AN INTELLIGENCE WORKSPACE</div>
+            <div className="welcome-title"><h1>Curiosity, meet<br/><em>clarity.</em></h1><p>Explore questions. Connect ideas. Follow the evidence.</p></div>
             <div className="research-composer">
-              <div className="composer-top"><span className="composer-label"><Sparkles size={14}/> Start a research project</span><span className="private-label"><span/> Private workspace</span></div>
-              <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} onKeyDown={(e) => {if(e.key === "Enter" && !e.shiftKey){e.preventDefault();startResearch();}}} placeholder="What would you like to investigate?" rows={3}/>
+              <div className="composer-top"><span className="composer-label"><Sparkles size={14}/> New research</span><span className="private-label"><span/> Private workspace</span></div>
+              <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} onKeyDown={(e) => {if(e.key === "Enter" && !e.shiftKey){e.preventDefault();startResearch();}}} placeholder="Ask a question or describe what you want to discover…" rows={3}/>
               <div className="composer-bottom">
                 <div className="composer-tools"><button title="Attach files"><Paperclip size={16}/></button><button title="Search the web"><Globe2 size={16}/><span>Web</span></button><button title="Research settings"><SlidersHorizontal size={15}/></button></div>
                 <div className="composer-controls">
@@ -106,9 +106,9 @@ export default function Home() {
               </div>
               <div className="composer-footnote">AXES AI can make mistakes. Verify important findings with original sources.</div>
             </div>
-            <div className="suggestion-heading"><span>MAKE A DISCOVERY</span><span>Choose a starting point</span></div>
+            <div className="suggestion-heading"><span>EXPLORE A STARTING POINT</span><span>Need inspiration?</span></div>
             <div className="suggestion-grid">{suggestions.map(({icon:Icon,title,prompt:sample})=><button key={title} className="suggestion-card" onClick={() => setPrompt(sample)}><span className="suggestion-icon"><Icon size={17}/></span><span><b>{title}</b><small>{sample}</small></span><ArrowUp size={14} className="suggestion-arrow"/></button>)}</div>
-            <div className="workspace-footer"><span><span className="footer-dot"/> Research tools ready</span><span>Powered by AXES AI <b>·</b> API gateway</span></div>
+            <div className="workspace-footer"><span><span className="footer-dot"/> Workspace ready</span><span>Built for deeper thinking <b>·</b> AXES AI</span></div>
           </> : <div className="research-session">
             <div className="session-title"><span className="session-icon"><Microscope size={17}/></span><div><small>RESEARCH PROJECT</small><h1>{messages[messages.length-1]}</h1></div></div>
             <div className="session-status"><span className="status-dot"/> {researching ? "Preparing your research..." : "Research prompt created"} <span>·</span> {selectedModel.model}</div>
