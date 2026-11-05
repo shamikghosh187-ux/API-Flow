@@ -20,7 +20,7 @@ export async function POST(request: Request) {
 
     let url = "";
     let model = "";
-    let headers: Record<string, string> = { "Content-Type": "application/json" };
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
     let payload: unknown;
 
     if (provider === "openai" || provider === "groq" || provider === "deepseek") {
