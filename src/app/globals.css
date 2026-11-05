@@ -86,3 +86,27 @@ button:focus-visible,textarea:focus-visible{outline:2px solid #b9e866;outline-of
 button{transition:background .16s,border-color .16s,color .16s,transform .16s}.icon-button{border-radius:9px}
 @media(max-width:760px){.axes-topbar{padding:0 13px}.research-scroll{padding:0 16px}.research-content{padding-top:52px}.welcome-title{margin-bottom:28px}.welcome-title h1{font-size:clamp(42px,10vw,57px)}.suggestion-card{min-height:76px}.workspace-footer{font-size:8px}.topbar-help{display:none}}
 @media(max-width:420px){.research-content{padding-top:40px}.welcome-title h1{font-size:42px}.model-select{max-width:120px}}
+
+/* Softer, less-lime accent palette */
+:root{--green:#a9c49a;--green-dim:#8faa80;--accent-sage:#a9c49a}
+button:focus-visible,textarea:focus-visible{outline-color:#a9c49a}
+.axes-app{background:radial-gradient(ellipse at 50% 4%,rgba(145,174,126,.045),transparent 38%),#090b0a}
+.axes-brand>span:last-child .brand-ai{color:#a0aaa1!important}
+.axes-symbol{color:#b0cba0;border-color:#394638;background:linear-gradient(145deg,#1b211a,#111512)}
+.axes-symbol i{background:#b8d2a7;box-shadow:0 0 8px #a9c49a55}
+.new-research{color:#dce7d7;border-color:#394437;background:linear-gradient(120deg,#1d241c,#171b16)}.new-research>svg{color:#b0cba0}.new-research:hover{background:#242d22;border-color:#4a5945}
+.nav-item.active{background:#1b211b;border-color:#303b2f;box-shadow:inset 2px 0 #a9c49a}.nav-item.active svg{color:#b0cba0}
+.status-dot,.footer-dot{background:#a9c49a;box-shadow:0 0 8px #a9c49a40}
+.welcome-title h1 em{color:#b2cba2;text-shadow:0 0 32px #a9c49a0c}
+.composer-label svg{color:#b0cba0}.private-label span{background:#93ad84}
+.mode-select svg:first-child{color:#a9c49a}
+.model-menu>button>svg{color:#a9c49a}
+.send-button,.session-composer>button{border-color:#a5be96;background:#a5be96;color:#172015;box-shadow:0 4px 14px #a5be9618}
+.send-button:hover:not(:disabled),.session-composer>button:hover:not(:disabled){background:#b8cdaa}
+.suggestion-card:hover .suggestion-arrow,.suggestion-heading button:hover{color:#a9c49a}
+.suggestion-icon{background:#1a2019;border-color:#374333;color:#aec69e}
+.session-icon,.placeholder-icon{color:#aec69e;border-color:#354132;background:#191f18}
+.session-placeholder button{color:#c5d8ba;border-color:#394536;background:#1a2018}
+.session-star:hover{color:#a9c49a}
+.upgrade-button{background:#1a2019;border-color:#394536;color:#d3dfca}.upgrade-button svg{color:#a9c49a}.upgrade-button:hover{background:#222a20}
+@media(prefers-reduced-motion:reduce){.suggestion-card:hover{transform:none}}
