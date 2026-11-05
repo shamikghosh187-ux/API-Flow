@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 type ResearchProject = { id: string; title: string; questions: string[]; answer: string; model: string; updatedAt: number };
+type ModelOption = { provider: string; providerId: string; model: string; mark: string; tone: string };
 
 const providers = [
   { id: "openai", name: "OpenAI", mark: "◉", tone: "openai" },
@@ -19,7 +20,7 @@ const providers = [
   { id: "openrouter", name: "OpenRouter", mark: "⌘", tone: "openrouter" },
   { id: "meshapi", name: "MeshAPI", mark: "✳", tone: "mesh" },
 ] as const;
-const defaultModels = [{ provider: "OpenAI", model: "gpt-4o-mini", mark: "◉", tone: "openai" }];
+const defaultModels: ModelOption[] = [{ provider: "OpenAI", providerId: "openai", model: "gpt-4o-mini", mark: "◉", tone: "openai" }];
 
 const navItems = [
   { label: "Start a research project", icon: Plus },
@@ -45,8 +46,8 @@ function Brand() {
 export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [modelOpen, setModelOpen] = useState(false);
-  const [models, setModels] = useState(defaultModels);
-  const [selectedModel, setSelectedModel] = useState(defaultModels[0]);
+  const [models, setModels] = useState<ModelOption[]>(defaultModels);
+  const [selectedModel, setSelectedModel] = useState<ModelOption>(defaultModels[0]);
   const [modelsLoading, setModelsLoading] = useState(false);
   const [modelsError, setModelsError] = useState("");
   const [mode, setMode] = useState("Deep research");
@@ -148,10 +149,10 @@ export default function Home() {
   async function startResearch(value = prompt) {
     const question = value.trim();
     if (!question || researching) return;
-    const providerId = (selectedModel as any).providerId || apiProvider;
+    const providerId = selectedModel.providerId || apiProvider;
     const key = window.sessionStorage.getItem(`axes:provider:${providerId}:api-key`);
     if (!key) {
-      setApiProvider((selectedModel as any).providerId || "openai");
+      setApiProvider(selectedModel.providerId || "openai");
       setActiveNav("Settings");
       setResearchError("Add and save this provider's API key in Settings to start researching.");
       return;
