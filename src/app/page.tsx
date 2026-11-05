@@ -9,11 +9,7 @@ import {
 } from "lucide-react";
 
 const models = [
-  { provider: "OpenAI", model: "GPT-4o", mark: "◎", tone: "openai" },
-  { provider: "Anthropic", model: "Claude 3.7 Sonnet", mark: "✳", tone: "anthropic" },
-  { provider: "Google", model: "Gemini 2.5 Pro", mark: "G", tone: "google" },
-  { provider: "DeepSeek", model: "DeepSeek R1", mark: "◈", tone: "deepseek" },
-  { provider: "Groq", model: "Llama 3.3 70B", mark: "ϟ", tone: "groq" },
+  { provider: "MeshAPI", model: "mistral/mistral-7b-instruct-v0", mark: "✳", tone: "mesh" },
 ];
 
 const navItems = [
@@ -55,12 +51,12 @@ export default function Home() {
 
   function saveApiKey() {
     if (!apiKey.trim()) return;
-    window.sessionStorage.setItem(`axes:${apiProvider.toLowerCase()}:api-key`, apiKey.trim());
+    window.sessionStorage.setItem("axes:meshapi:api-key", apiKey.trim());
     setApiKeySaved(true);
   }
 
   function removeApiKey() {
-    window.sessionStorage.removeItem(`axes:${apiProvider.toLowerCase()}:api-key`);
+    window.sessionStorage.removeItem("axes:meshapi:api-key");
     setApiKey("");
     setApiKeySaved(false);
   }
@@ -68,10 +64,9 @@ export default function Home() {
   async function startResearch(value = prompt) {
     const question = value.trim();
     if (!question || researching) return;
-    const providerKey = selectedModel.provider === "Google" ? "google gemini" : selectedModel.provider.toLowerCase();
-    const key = window.sessionStorage.getItem(`axes:${providerKey}:api-key`);
+    const key = window.sessionStorage.getItem("axes:meshapi:api-key");
     if (!key) {
-      setApiProvider(selectedModel.provider === "Google" ? "Google Gemini" : selectedModel.provider);
+      setApiProvider("MeshAPI");
       setActiveNav("Settings");
       setResearchError("Add and save this provider's API key in Settings to start researching.");
       return;
@@ -85,7 +80,7 @@ export default function Home() {
       const response = await fetch("/api/research", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider: selectedModel.provider === "Google" ? "Google Gemini" : selectedModel.provider, apiKey: key, question }),
+        body: JSON.stringify({ provider: "meshapi", model: selectedModel.model, apiKey: key, question }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Research request failed.");
@@ -127,10 +122,10 @@ export default function Home() {
         <div className="research-content">
           {activeNav === "Settings" ? <div className="settings-page">
             <div className="settings-heading"><span className="settings-kicker">WORKSPACE PREFERENCES</span><h1>Settings</h1><p>Connect an AI provider to prepare your research workspace.</p></div>
-            <section className="settings-card"><div className="settings-card-title"><span className="settings-card-icon"><KeyRound size={17}/></span><div><h2>AI provider API key</h2><p>Choose a provider and add your key.</p></div></div>
-              <label className="settings-label">Provider</label><select className="settings-select" value={apiProvider} onChange={(e)=>{setApiProvider(e.target.value);setApiKey("");setApiKeySaved(false);}}><option>OpenAI</option><option>Anthropic</option><option>Google Gemini</option><option>DeepSeek</option><option>Groq</option></select>
+            <section className="settings-card"><div className="settings-card-title"><span className="settings-card-icon"><KeyRound size={17}/></span><div><h2>AI provider API key</h2><p>Add your MeshAPI key to connect the workspace.</p></div></div>
+              <label className="settings-label">Provider</label><select className="settings-select" value={apiProvider} onChange={(e)=>{setApiProvider(e.target.value);setApiKey("");setApiKeySaved(false);}}><option>MeshAPI</option></select>
               <label className="settings-label" htmlFor="provider-key">API key</label><div className="api-key-field"><input id="provider-key" type={showApiKey ? "text" : "password"} value={apiKey} onChange={(e)=>{setApiKey(e.target.value);setApiKeySaved(false);}} placeholder={`Paste your ${apiProvider} API key`} autoComplete="off"/><button type="button" aria-label={showApiKey ? "Hide API key" : "Show API key"} onClick={()=>setShowApiKey(!showApiKey)}>{showApiKey ? <EyeOff size={16}/> : <Eye size={16}/>}</button></div>
-              <div className="settings-security"><ShieldCheck size={15}/><span>Your key stays in this browser tab session and is sent to the selected provider through the AXES research endpoint. Never share your key.</span></div>
+              <div className="settings-security"><ShieldCheck size={15}/><span>Your MeshAPI key stays in this browser tab session and is sent securely to the AXES research endpoint. Never share your key.</span></div>
               <div className="settings-actions"><button className="settings-save" disabled={!apiKey.trim()} onClick={saveApiKey}>{apiKeySaved ? <><Check size={15}/> Saved for this session</> : "Save key"}</button><button className="settings-remove" onClick={removeApiKey}><Trash2 size={14}/> Remove</button></div>
             </section><div className="settings-note">Keys are session-only and are not saved to your AXES account or committed to GitHub.</div>
           </div> : messages.length === 0 ? <>
@@ -157,7 +152,7 @@ export default function Home() {
           </> : <div className="research-session">
             <div className="session-title"><span className="session-icon"><Microscope size={17}/></span><div><small>RESEARCH QUESTION</small><h1>{messages[messages.length-1]}</h1></div></div>
             <div className="session-status"><span className="status-dot"/> {researching ? "Preparing your workspace..." : "Project created"} <span>·</span> {selectedModel.model}</div>
-            <div className="session-placeholder"><div className="placeholder-icon"><Atom size={24}/></div><h2>{researching ? "Researching your question…" : researchError ? "Research could not complete" : researchAnswer ? "Research response" : "A question is the beginning"}</h2>{researching ? <p>Sending your question to {selectedModel.provider}. Please wait…</p> : researchError ? <p className="research-error">{researchError}</p> : researchAnswer ? <div className="research-answer">{researchAnswer}</div> : <p>Enter a question to begin. Add your provider API key in Settings first.</p>}<button onClick={() => {setMessages([]);setResearchAnswer("");setResearchError("");setActiveNav("New research");}}>New research project <Plus size={14}/></button></div>
+            <div className="session-placeholder"><div className="placeholder-icon"><Atom size={24}/></div><h2>{researching ? "Researching your question…" : researchError ? "Research could not complete" : researchAnswer ? "Research response" : "A question is the beginning"}</h2>{researching ? <p>Sending your question to {selectedModel.provider}. Please wait…</p> : researchError ? <p className="research-error">{researchError}</p> : researchAnswer ? <div className="research-answer">{researchAnswer}</div> : <p>Enter a question to begin. Add your MeshAPI key in Settings first.</p>}<button onClick={() => {setMessages([]);setResearchAnswer("");setResearchError("");setActiveNav("New research");}}>New research project <Plus size={14}/></button></div>
             <div className="session-composer"><textarea value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder="Add a follow-up question..." rows={2}/><button disabled={!prompt.trim()} onClick={()=>startResearch()}><ArrowUp size={16}/></button></div>
           </div>}
         </div>
