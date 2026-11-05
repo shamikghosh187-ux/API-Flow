@@ -10,9 +10,16 @@ import {
 
 type ResearchProject = { id: string; title: string; questions: string[]; answer: string; model: string; updatedAt: number };
 
-const defaultModels = [
-  { provider: "MeshAPI", model: "mistral/mistral-7b-instruct-v0", mark: "✳", tone: "mesh" },
-];
+const providers = [
+  { id: "openai", name: "OpenAI", mark: "◉", tone: "openai" },
+  { id: "gemini", name: "Google Gemini", mark: "✦", tone: "gemini" },
+  { id: "anthropic", name: "Anthropic Claude", mark: "✳", tone: "anthropic" },
+  { id: "groq", name: "Groq", mark: "ϟ", tone: "groq" },
+  { id: "deepseek", name: "DeepSeek", mark: "◈", tone: "deepseek" },
+  { id: "openrouter", name: "OpenRouter", mark: "⌘", tone: "openrouter" },
+  { id: "meshapi", name: "MeshAPI", mark: "✳", tone: "mesh" },
+] as const;
+const defaultModels = [{ provider: "OpenAI", model: "gpt-4o-mini", mark: "◉", tone: "openai" }];
 
 const navItems = [
   { label: "Start a research project", icon: Plus },
@@ -47,7 +54,7 @@ export default function Home() {
   const [activeNav, setActiveNav] = useState("New research");
   const [messages, setMessages] = useState<string[]>([]);
   const [researching, setResearching] = useState(false);
-  const [apiProvider, setApiProvider] = useState("OpenAI");
+  const [apiProvider, setApiProvider] = useState("openai");
   const [apiKey, setApiKey] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
   const [apiKeySaved, setApiKeySaved] = useState(false);
@@ -67,14 +74,14 @@ export default function Home() {
   }, [projects, projectsReady]);
 
   useEffect(() => {
-    const key = window.sessionStorage.getItem("axes:meshapi:api-key");
+    const key = window.sessionStorage.getItem(`axes:provider:${apiProvider}:api-key`);
     if (!key) return;
     let cancelled = false;
     setModelsLoading(true);
     fetch("/api/models", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ apiKey: key }),
+      body: JSON.stringify({ provider: apiProvider, apiKey: key }),
     })
       .then(async (response) => {
         const data = await response.json().catch(() => ({}));
@@ -84,7 +91,8 @@ export default function Home() {
           : [];
         if (!available.length) throw new Error("MeshAPI returned no models for this key.");
         if (cancelled) return;
-        const nextModels = available.map((model: string) => ({ provider: "MeshAPI", model, mark: "✳", tone: "mesh" }));
+        const providerMeta = providers.find((p) => p.id === apiProvider) || providers[0];
+        const nextModels = available.map((model: string) => ({ provider: providerMeta.name, providerId: apiProvider, model, mark: providerMeta.mark, tone: providerMeta.tone }));
         setModels(nextModels);
         setSelectedModel(nextModels[0]);
         setApiKeySaved(true);
@@ -108,7 +116,7 @@ export default function Home() {
       const response = await fetch("/api/models", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ apiKey: key }),
+        body: JSON.stringify({ provider: apiProvider, apiKey: key }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.error || "Could not load models from MeshAPI.");
@@ -116,8 +124,9 @@ export default function Home() {
         ? data.models.filter((model: unknown): model is string => typeof model === "string" && model.trim().length > 0)
         : [];
       if (!available.length) throw new Error("MeshAPI returned no models for this key.");
-      const nextModels = available.map((model: string) => ({ provider: "MeshAPI", model, mark: "✳", tone: "mesh" }));
-      window.sessionStorage.setItem("axes:meshapi:api-key", key);
+      const providerMeta = providers.find((p) => p.id === apiProvider) || providers[0];
+      const nextModels = available.map((model: string) => ({ provider: providerMeta.name, providerId: apiProvider, model, mark: providerMeta.mark, tone: providerMeta.tone }));
+      window.sessionStorage.setItem(`axes:provider:${apiProvider}:api-key`, key);
       setModels(nextModels);
       setSelectedModel(nextModels[0]);
       setApiKeySaved(true);
@@ -131,7 +140,7 @@ export default function Home() {
   }
 
   function removeApiKey() {
-    window.sessionStorage.removeItem("axes:meshapi:api-key");
+    window.sessionStorage.removeItem(`axes:provider:${apiProvider}:api-key`);
     setApiKey("");
     setApiKeySaved(false);
   }
@@ -139,9 +148,10 @@ export default function Home() {
   async function startResearch(value = prompt) {
     const question = value.trim();
     if (!question || researching) return;
-    const key = window.sessionStorage.getItem("axes:meshapi:api-key");
+    const providerId = (selectedModel as any).providerId || apiProvider;
+    const key = window.sessionStorage.getItem(`axes:provider:${providerId}:api-key`);
     if (!key) {
-      setApiProvider("MeshAPI");
+      setApiProvider((selectedModel as any).providerId || "openai");
       setActiveNav("Settings");
       setResearchError("Add and save this provider's API key in Settings to start researching.");
       return;
@@ -175,7 +185,7 @@ export default function Home() {
       const response = await fetch("/api/research", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider: "meshapi", model: selectedModel.model, apiKey: key, question }),
+        body: JSON.stringify({ provider: providerId, model: selectedModel.model, apiKey: key, question }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Research request failed.");
@@ -221,10 +231,10 @@ export default function Home() {
         <div className="research-content">
           {activeNav === "Settings" ? <div className="settings-page">
             <div className="settings-heading"><span className="settings-kicker">WORKSPACE PREFERENCES</span><h1>Settings</h1><p>Connect an AI provider to prepare your research workspace.</p></div>
-            <section className="settings-card"><div className="settings-card-title"><span className="settings-card-icon"><KeyRound size={17}/></span><div><h2>AI provider API key</h2><p>Add your MeshAPI key to connect the workspace.</p></div></div>
-              <label className="settings-label">Provider</label><select className="settings-select" value={apiProvider} onChange={(e)=>{setApiProvider(e.target.value);setApiKey("");setApiKeySaved(false);}}><option>MeshAPI</option></select>
-              <label className="settings-label" htmlFor="provider-key">API key</label><div className="api-key-field"><input id="provider-key" type={showApiKey ? "text" : "password"} value={apiKey} onChange={(e)=>{setApiKey(e.target.value);setApiKeySaved(false);}} placeholder={`Paste your ${apiProvider} API key`} autoComplete="off"/><button type="button" aria-label={showApiKey ? "Hide API key" : "Show API key"} onClick={()=>setShowApiKey(!showApiKey)}>{showApiKey ? <EyeOff size={16}/> : <Eye size={16}/>}</button></div>
-              <div className="settings-security"><ShieldCheck size={15}/><span>Your MeshAPI key stays in this browser tab session. AXES uses it to discover models and send research requests. Never share your key.</span></div>{modelsLoading && <p>Loading available models from MeshAPI…</p>}{modelsError && <p className="research-error">{modelsError}</p>}{apiKeySaved && !modelsLoading && !modelsError && <p>{models.length} models loaded. The first model is selected automatically.</p>}
+            <section className="settings-card"><div className="settings-card-title"><span className="settings-card-icon"><KeyRound size={17}/></span><div><h2>AI provider API key</h2><p>Connect a provider with its own API key and model catalog.</p></div></div>
+              <label className="settings-label">Provider</label><select className="settings-select" value={apiProvider} onChange={(e)=>{setApiProvider(e.target.value);setApiKey("");setApiKeySaved(false);setModelsError("");setApiKeySaved(false);}}>{providers.map((p)=><option key={p.id} value={p.id}>{p.name}</option>)}</select>
+              <label className="settings-label" htmlFor="provider-key">API key</label><div className="api-key-field"><input id="provider-key" type={showApiKey ? "text" : "password"} value={apiKey} onChange={(e)=>{setApiKey(e.target.value);setApiKeySaved(false);}} placeholder={`Paste your ${providers.find((p)=>p.id===apiProvider)?.name || apiProvider} API key`} autoComplete="off"/><button type="button" aria-label={showApiKey ? "Hide API key" : "Show API key"} onClick={()=>setShowApiKey(!showApiKey)}>{showApiKey ? <EyeOff size={16}/> : <Eye size={16}/>}</button></div>
+              <div className="settings-security"><ShieldCheck size={15}/><span>Your {providers.find((p)=>p.id===apiProvider)?.name || apiProvider} key stays in this browser tab session. AXES uses it to discover models and send requests. Never share it.</span></div>{modelsLoading && <p>Loading available models from MeshAPI…</p>}{modelsError && <p className="research-error">{modelsError}</p>}{apiKeySaved && !modelsLoading && !modelsError && <p>{models.length} models loaded. The first model is selected automatically.</p>}
               <div className="settings-actions"><button className="settings-save" disabled={!apiKey.trim() || modelsLoading} onClick={saveApiKey}>{modelsLoading ? "Loading models…" : apiKeySaved ? <><Check size={15}/> Key saved · models loaded</> : "Save key"}</button><button className="settings-remove" onClick={removeApiKey}><Trash2 size={14}/> Remove</button></div>
             </section><div className="settings-note">Keys are session-only and are not saved to your AXES account or committed to GitHub.</div>
           </div> : messages.length === 0 ? <>
