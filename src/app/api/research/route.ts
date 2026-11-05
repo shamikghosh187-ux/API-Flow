@@ -40,17 +40,40 @@ export async function POST(request: Request) {
         body: JSON.stringify({ model, messages: [{ role: "system", content: "You are AXES AI, a careful research assistant. Structure your answer, distinguish evidence from uncertainty, and never invent sources or claim to browse." }, { role: "user", content: question }], temperature: 0.3 }),
       });
     }
-    const data = await response.json().catch(() => ({}));
+    const rawData: unknown = await response.json().catch(() => ({}));
+    const data = typeof rawData === "object" && rawData !== null ? rawData as Record<string, unknown> : {};
+    const errorValue = data.error;
+    const providerError = typeof errorValue === "object" && errorValue !== null
+      ? (errorValue as Record<string, unknown>).message
+      : errorValue;
     if (!response.ok) {
-      const message = data?.error?.message || data?.error?.message || data?.message || `Provider request failed (HTTP ${response.status}). Check the selected model and key.`;
+      const message = providerError || data.message || `Provider request failed (HTTP ${response.status}). Check the selected model and key.`;
       return NextResponse.json({ error: String(message) }, { status: response.status === 401 || response.status === 403 ? response.status : 502 });
     }
-    type TextPart = { text?: unknown };
-    const answer = provider === "gemini"
-      ? data?.candidates?.[0]?.content?.parts?.map((part: TextPart) => typeof part.text === "string" ? part.text : "").join("\n").trim()
-      : provider === "anthropic"
-        ? data?.content?.map((part: TextPart) => typeof part.text === "string" ? part.text : "").join("\n").trim()
-        : data?.choices?.[0]?.message?.content?.trim();
+    const readTextParts = (value: unknown): string => {
+      if (!Array.isArray(value)) return "";
+      return value.map((part: unknown) => {
+        if (typeof part !== "object" || part === null) return "";
+        const text = (part as Record<string, unknown>).text;
+        return typeof text === "string" ? text : "";
+      }).join("\\n").trim();
+    };
+    let answer = "";
+    if (provider === "gemini") {
+      const candidates = Array.isArray(data.candidates) ? data.candidates : [];
+      const candidate = candidates[0];
+      const content = typeof candidate === "object" && candidate !== null ? (candidate as Record<string, unknown>).content : undefined;
+      const parts = typeof content === "object" && content !== null ? (content as Record<string, unknown>).parts : undefined;
+      answer = readTextParts(parts);
+    } else if (provider === "anthropic") {
+      answer = readTextParts(data.content);
+    } else {
+      const choices = Array.isArray(data.choices) ? data.choices : [];
+      const choice = choices[0];
+      const message = typeof choice === "object" && choice !== null ? (choice as Record<string, unknown>).message : undefined;
+      const content = typeof message === "object" && message !== null ? (message as Record<string, unknown>).content : undefined;
+      answer = typeof content === "string" ? content.trim() : "";
+    }
     if (!answer) return NextResponse.json({ error: "The provider returned an empty response. Try another model." }, { status: 502 });
     return NextResponse.json({ answer, model, provider });
   } catch (error) {
