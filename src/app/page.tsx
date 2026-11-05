@@ -66,6 +66,38 @@ export default function Home() {
     if (projectsReady) window.localStorage.setItem("axes:research-projects", JSON.stringify(projects));
   }, [projects, projectsReady]);
 
+  useEffect(() => {
+    const key = window.sessionStorage.getItem("axes:meshapi:api-key");
+    if (!key) return;
+    let cancelled = false;
+    setModelsLoading(true);
+    fetch("/api/models", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ apiKey: key }),
+    })
+      .then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || "Could not load saved MeshAPI models.");
+        const available = Array.isArray(data.models)
+          ? data.models.filter((model: unknown): model is string => typeof model === "string" && model.trim().length > 0)
+          : [];
+        if (!available.length) throw new Error("MeshAPI returned no models for this key.");
+        if (cancelled) return;
+        const nextModels = available.map((model: string) => ({ provider: "MeshAPI", model, mark: "✳", tone: "mesh" }));
+        setModels(nextModels);
+        setSelectedModel(nextModels[0]);
+        setApiKeySaved(true);
+      })
+      .catch((error) => {
+        if (!cancelled) setModelsError(error instanceof Error ? error.message : "Could not load saved MeshAPI models.");
+      })
+      .finally(() => {
+        if (!cancelled) setModelsLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
   async function saveApiKey() {
     const key = apiKey.trim();
     if (!key || modelsLoading) return;
