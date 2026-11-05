@@ -45,9 +45,12 @@ export async function POST(request: Request) {
       const message = data?.error?.message || data?.error?.message || data?.message || `Provider request failed (HTTP ${response.status}). Check the selected model and key.`;
       return NextResponse.json({ error: String(message) }, { status: response.status === 401 || response.status === 403 ? response.status : 502 });
     }
-    const answer = provider === "gemini" ? data?.candidates?.[0]?.content?.parts?.map((p: any) => p.text || "").join("\n").trim()
-      : provider === "anthropic" ? data?.content?.map((p: any) => p.text || "").join("\n").trim()
-      : data?.choices?.[0]?.message?.content?.trim();
+    type TextPart = { text?: unknown };
+    const answer = provider === "gemini"
+      ? data?.candidates?.[0]?.content?.parts?.map((part: TextPart) => typeof part.text === "string" ? part.text : "").join("\n").trim()
+      : provider === "anthropic"
+        ? data?.content?.map((part: TextPart) => typeof part.text === "string" ? part.text : "").join("\n").trim()
+        : data?.choices?.[0]?.message?.content?.trim();
     if (!answer) return NextResponse.json({ error: "The provider returned an empty response. Try another model." }, { status: 502 });
     return NextResponse.json({ answer, model, provider });
   } catch (error) {
