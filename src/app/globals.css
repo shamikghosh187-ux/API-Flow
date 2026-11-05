@@ -110,3 +110,28 @@ button:focus-visible,textarea:focus-visible{outline-color:#a9c49a}
 .session-star:hover{color:#a9c49a}
 .upgrade-button{background:#1a2019;border-color:#394536;color:#d3dfca}.upgrade-button svg{color:#a9c49a}.upgrade-button:hover{background:#222a20}
 @media(prefers-reduced-motion:reduce){.suggestion-card:hover{transform:none}}
+
+
+/* AXES AI warm-orange accent refresh */
+:root{--green:#e9a15b;--green-dim:#cf8745;--accent-sage:#e9a15b}
+button:focus-visible,textarea:focus-visible{outline-color:#e9a15b}
+.axes-app{background:radial-gradient(ellipse at 50% 4%,rgba(233,161,91,.055),transparent 38%),#090b0a}
+.axes-brand>span:last-child>span{color:#e9a15b}
+.axes-brand>span:last-child .brand-ai{color:#a0aaa1!important}
+.axes-symbol{color:#e9a15b;border-color:#4a3829;background:linear-gradient(145deg,#241b14,#111512)}
+.axes-symbol i{background:#ffc27c;box-shadow:0 0 8px #e9a15b55}
+.new-research{color:#f0dfcf;border-color:#4a3829;background:linear-gradient(120deg,#2a2018,#191713)}.new-research>svg{color:#e9a15b}.new-research:hover{background:#33251a;border-color:#65472f}
+.nav-item.active{background:#261e17;border-color:#493627;box-shadow:inset 2px 0 #e9a15b}.nav-item.active svg{color:#e9a15b}
+.status-dot,.footer-dot{background:#e9a15b;box-shadow:0 0 8px #e9a15b40}
+.welcome-title h1 em{color:#e9a15b;text-shadow:0 0 32px #e9a15b12}
+.composer-label svg{color:#e9a15b}.private-label span{background:#c98b4c}
+.mode-select svg:first-child{color:#e9a15b}
+.model-menu>button>svg{color:#e9a15b}
+.send-button,.session-composer>button{border-color:#e9a15b;background:#e9a15b;color:#24170d;box-shadow:0 4px 14px #e9a15b18}
+.send-button:hover:not(:disabled),.session-composer>button:hover:not(:disabled){background:#f5b777}
+.suggestion-card:hover .suggestion-arrow,.suggestion-heading button:hover{color:#e9a15b}
+.suggestion-icon{background:#241c16;border-color:#493627;color:#e9a15b}
+.session-icon,.placeholder-icon{color:#e9a15b;border-color:#493627;background:#211a14}
+.session-placeholder button{color:#f0d5b9;border-color:#493627;background:#241b14}
+.session-star:hover{color:#e9a15b}
+.upgrade-button{background:#241b14;border-color:#493627;color:#f0d5b9}.upgrade-button svg{color:#e9a15b}.upgrade-button:hover{background:#302116}
