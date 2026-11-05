@@ -105,7 +105,7 @@ export default function Home() {
         if (!cancelled) setModelsLoading(false);
       });
     return () => { cancelled = true; };
-  }, []);
+  }, [apiProvider]);
 
   async function saveApiKey() {
     const key = apiKey.trim();
