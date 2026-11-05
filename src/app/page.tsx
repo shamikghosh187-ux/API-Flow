@@ -17,17 +17,17 @@ const models = [
 ];
 
 const navItems = [
-  { label: "New research", icon: Plus },
+  { label: "Start a research project", icon: Plus },
   { label: "Discover", icon: Search },
   { label: "Research library", icon: Library },
   { label: "Reports", icon: FileText },
 ];
 
 const suggestions = [
-  { icon: Telescope, title: "Explore a scientific question", prompt: "What are the biggest open questions in astrophysics today?" },
-  { icon: BookOpen, title: "Analyze a research paper", prompt: "Help me understand a recent research paper about black holes." },
-  { icon: FlaskConical, title: "Develop a research idea", prompt: "Help me develop a testable research idea about exoplanets." },
-  { icon: Globe2, title: "Research across the web", prompt: "Research the latest discoveries about dark matter and cite sources." },
+  { icon: Telescope, title: "Map the frontier of astrophysics", prompt: "What are the most important unresolved questions in astrophysics, and what evidence is shaping current research?" },
+  { icon: BookOpen, title: "Unpack a research paper", prompt: "Explain a recent black-hole research paper: its question, methods, findings, limitations, and significance." },
+  { icon: FlaskConical, title: "Shape a testable research idea", prompt: "Help me formulate a testable exoplanet research question, identify relevant evidence, and outline a feasible approach." },
+  { icon: Globe2, title: "Trace the evidence on dark matter", prompt: "Review recent dark-matter research, compare key findings, and identify the original sources behind the evidence." },
 ];
 
 function Brand() {
@@ -89,11 +89,11 @@ export default function Home() {
       <div className="research-scroll">
         <div className="research-content">
           {messages.length === 0 ? <>
-            <div className="welcome-eyebrow"><span className="status-dot"/> AN INTELLIGENCE WORKSPACE</div>
-            <div className="welcome-title"><h1>Curiosity, meet<br/><em>clarity.</em></h1><p>Explore questions. Connect ideas. Follow the evidence.</p></div>
+            <div className="welcome-eyebrow"><span className="status-dot"/> YOUR SPACE FOR RESEARCH</div>
+            <div className="welcome-title"><h1>Turn questions into<br/><em>understanding.</em></h1><p>Investigate the unknown. Examine the evidence. Build a clearer picture.</p></div>
             <div className="research-composer">
-              <div className="composer-top"><span className="composer-label"><Sparkles size={14}/> New research</span><span className="private-label"><span/> Private workspace</span></div>
-              <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} onKeyDown={(e) => {if(e.key === "Enter" && !e.shiftKey){e.preventDefault();startResearch();}}} placeholder="Ask a question or describe what you want to discover…" rows={3}/>
+              <div className="composer-top"><span className="composer-label"><Sparkles size={14}/> New research</span><span className="private-label"><span/> Your workspace</span></div>
+              <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} onKeyDown={(e) => {if(e.key === "Enter" && !e.shiftKey){e.preventDefault();startResearch();}}} placeholder="What would you like to investigate?" rows={3}/>
               <div className="composer-bottom">
                 <div className="composer-tools"><button title="Attach files"><Paperclip size={16}/></button><button title="Search the web"><Globe2 size={16}/><span>Web</span></button><button title="Research settings"><SlidersHorizontal size={15}/></button></div>
                 <div className="composer-controls">
@@ -104,16 +104,16 @@ export default function Home() {
                   <button className="send-button" disabled={!prompt.trim()} aria-label="Start research" onClick={() => startResearch()}><ArrowUp size={17}/></button>
                 </div>
               </div>
-              <div className="composer-footnote">AXES AI can make mistakes. Verify important findings with original sources.</div>
+              <div className="composer-footnote">AI-generated responses may be inaccurate. Check important claims against primary sources.</div>
             </div>
-            <div className="suggestion-heading"><span>EXPLORE A STARTING POINT</span><span>Need inspiration?</span></div>
+            <div className="suggestion-heading"><span>START WITH A QUESTION</span><span>Suggested research directions</span></div>
             <div className="suggestion-grid">{suggestions.map(({icon:Icon,title,prompt:sample})=><button key={title} className="suggestion-card" onClick={() => setPrompt(sample)}><span className="suggestion-icon"><Icon size={17}/></span><span><b>{title}</b><small>{sample}</small></span><ArrowUp size={14} className="suggestion-arrow"/></button>)}</div>
-            <div className="workspace-footer"><span><span className="footer-dot"/> Workspace ready</span><span>Built for deeper thinking <b>·</b> AXES AI</span></div>
+            <div className="workspace-footer"><span><span className="footer-dot"/> Ready to explore</span><span>Research, made more deliberate <b>·</b> AXES AI</span></div>
           </> : <div className="research-session">
-            <div className="session-title"><span className="session-icon"><Microscope size={17}/></span><div><small>RESEARCH PROJECT</small><h1>{messages[messages.length-1]}</h1></div></div>
-            <div className="session-status"><span className="status-dot"/> {researching ? "Preparing your research..." : "Research prompt created"} <span>·</span> {selectedModel.model}</div>
-            <div className="session-placeholder"><div className="placeholder-icon"><Atom size={24}/></div><h2>{researching ? "Setting up your research" : "Your research starts here"}</h2><p>The research interface is ready. Connect the AXES AI gateway and research sources to generate answers with citations.</p><button onClick={() => {setMessages([]);setActiveNav("New research");}}>Start a new project <Plus size={14}/></button></div>
-            <div className="session-composer"><textarea value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder="Continue exploring this topic..." rows={2}/><button disabled={!prompt.trim()} onClick={()=>startResearch()}><ArrowUp size={16}/></button></div>
+            <div className="session-title"><span className="session-icon"><Microscope size={17}/></span><div><small>RESEARCH QUESTION</small><h1>{messages[messages.length-1]}</h1></div></div>
+            <div className="session-status"><span className="status-dot"/> {researching ? "Preparing your workspace..." : "Project created"} <span>·</span> {selectedModel.model}</div>
+            <div className="session-placeholder"><div className="placeholder-icon"><Atom size={24}/></div><h2>{researching ? "Setting up your research" : "A question is the beginning"}</h2><p>This project is ready for the research workflow. AXES AI's research engine, source retrieval, and citation generation still need to be connected before it can produce findings.</p><button onClick={() => {setMessages([]);setActiveNav("New research");}}>New research project <Plus size={14}/></button></div>
+            <div className="session-composer"><textarea value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder="Add a follow-up question..." rows={2}/><button disabled={!prompt.trim()} onClick={()=>startResearch()}><ArrowUp size={16}/></button></div>
           </div>}
         </div>
       </div>
