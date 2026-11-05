@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import {
-  Atom, ArrowUp, ChevronDown, ChevronLeft, Plus, Search, BookOpen, FileText,
+  Atom, ArrowUp, ChevronDown, Plus, Search, BookOpen, FileText,
   Settings2, Sparkles, Globe2, Paperclip, BrainCircuit, Microscope, FlaskConical,
   History, PanelLeftClose, Command, Telescope, Orbit, Library, SlidersHorizontal,
-  MoreHorizontal, X, Check, Zap, Menu
+  MoreHorizontal, Check, Menu
 } from "lucide-react";
 
 const models = [
