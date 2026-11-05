@@ -157,3 +157,8 @@ button:focus-visible,textarea:focus-visible{outline-color:#e9a15b}
 @media(max-height:650px){.research-content:has(.settings-page){padding-top:10px}.settings-heading{margin-bottom:10px}.settings-heading h1{font-size:25px}.settings-card{padding:12px}.settings-card-title{margin-bottom:10px}.settings-security{margin-top:8px;padding:7px}.settings-actions{margin-top:9px}.settings-note{display:none}}
 .research-answer{width:100%;max-width:700px;max-height:52vh;overflow:auto;white-space:pre-wrap;text-align:left;color:#d7ded7;font-size:12px;line-height:1.8;padding:16px;border:1px solid #343b35;border-radius:11px;background:#121613}
 .research-error{max-width:500px;color:#e8a58c!important}
+
+
+/* Main workspace: keep the first research screen within the viewport */
+@media(min-width:761px){.research-scroll:has(.welcome-eyebrow){overflow:hidden}.research-content:has(.welcome-eyebrow){padding-top:clamp(30px,7vh,76px);padding-bottom:18px}.welcome-title{margin-bottom:clamp(18px,3.2vh,35px)}.suggestion-heading{margin-top:clamp(20px,3.5vh,40px)}.workspace-footer{margin-top:clamp(16px,3vh,34px)}}
+@media(max-width:760px){.research-scroll:has(.welcome-eyebrow){overflow:auto}.research-content:has(.welcome-eyebrow){padding-top:38px;padding-bottom:20px}}
